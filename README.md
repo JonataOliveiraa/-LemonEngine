@@ -70,6 +70,7 @@ src/
 ├── services/             # Lógica de Build e Linguagem
 ├── constants/            # Templates e Configurações
 └── types/                # Definições TypeScript
+```
 
 ### Tecnologias Utilizadas
 1. Core: React 19, TypeScript, Vite.
