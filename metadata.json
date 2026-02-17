@@ -1,0 +1,5 @@
+{
+  "name": "ExMod Creator - Terraria Mobile Mod Builder",
+  "description": "A professional-grade web environment for building Terraria Mobile mods for TL Pro. Features a dual visual/code editor, entity management, and automated code generation based on ExampleMod 1.5 standards.",
+  "requestFramePermissions": []
+}
