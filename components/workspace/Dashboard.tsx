@@ -120,7 +120,7 @@ const Dashboard: React.FC = () => {
             {/* Reduzido de rounded-2xl para rounded-xl */}
             <div className="w-14 h-14 bg-[#007acc] rounded-xl shadow-xl shadow-blue-500/20 flex items-center justify-center overflow-hidden shrink-0 border border-white/20 dark:border-[#333]">
                <img 
-                 src="/assets/logo.png" 
+                 src="/assets/icon.png" 
                  alt="Logo" 
                  className="w-full h-full object-contain drop-shadow-sm" 
                  onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.classList.remove('hidden'); }}
