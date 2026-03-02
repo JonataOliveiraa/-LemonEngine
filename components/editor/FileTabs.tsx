@@ -34,7 +34,7 @@ const FileTabs: React.FC = () => {
 
   return (
     // Alterado: flex-1 e min-w-0 para funcionar dentro do flex container do pai
-    <div className="flex-1 flex h-full overflow-x-auto custom-scrollbar-hide select-none items-end min-w-0" ref={scrollRef}>
+    <div className="flex-1 flex h-full overflow-x-auto custom-scrollbar-hide select-none items-end min-w-0 bg-slate-100 dark:bg-[#252526]" ref={scrollRef}>
         {openFiles.map(fileId => {
             const info = getFileInfo(fileId);
             const isActive = activeEntityId === fileId;
@@ -46,17 +46,17 @@ const FileTabs: React.FC = () => {
                     onClick={() => setActiveEntity(fileId)}
                     className={`
                         group flex items-center gap-2 px-3 py-2.5 min-w-[120px] max-w-[200px] border-r border-slate-200 dark:border-[#333] cursor-pointer transition-colors relative h-full
-                        ${isActive ? 'bg-white dark:bg-[#1e1e1e] text-slate-900 dark:text-white font-bold' : 'bg-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-[#333]'}
+                        ${isActive ? 'bg-white dark:bg-[#1e1e1e] text-slate-900 dark:text-white font-bold' : 'bg-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-[#2d2d2d]'}
                     `}
                 >
                     {isActive && <div className="absolute top-0 left-0 right-0 h-0.5 bg-[#007acc]" />}
                     
                     <span className="opacity-80 shrink-0">{info.icon}</span>
-                    <span className="text-[11px] truncate flex-1 leading-none pt-0.5">{info.name}</span>
+                    <span className="text-xs truncate flex-1 leading-none pt-0.5">{info.name}</span>
                     
                     <button 
                         onClick={(e) => { e.stopPropagation(); closeFile(fileId); }}
-                        className={`p-0.5 rounded-md hover:bg-slate-300 dark:hover:bg-[#444] transition-all opacity-0 group-hover:opacity-100 ${isActive ? 'opacity-100' : ''}`}
+                        className={`p-1 rounded-md hover:bg-slate-300 dark:hover:bg-[#444] transition-all opacity-0 group-hover:opacity-100 ${isActive ? 'opacity-100' : ''}`}
                     >
                         <X className="w-3 h-3" />
                     </button>

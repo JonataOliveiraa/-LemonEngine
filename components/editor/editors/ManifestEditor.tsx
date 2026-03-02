@@ -88,9 +88,9 @@ const ManifestEditor: React.FC<Props> = ({ workspace }) => {
     <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 pb-24 p-4 md:p-8 h-auto lg:h-full flex flex-col">
       
       {/* HEADER: Mod Identity */}
-      <div className="bg-slate-50 dark:bg-[#252526] p-6 rounded-2xl border border-slate-200 dark:border-[#333] shadow-sm flex flex-col md:flex-row items-center gap-6 shrink-0">
+      <div className="bg-slate-50 dark:bg-[#252526] p-6 rounded-lg border border-slate-200 dark:border-[#333] shadow-sm flex flex-col md:flex-row items-center gap-6 shrink-0">
         <div className="relative group shrink-0">
-            <div className="w-24 h-24 bg-white dark:bg-[#1e1e1e] rounded-2xl border-2 border-dashed border-slate-300 dark:border-[#444] flex items-center justify-center overflow-hidden cursor-pointer hover:border-[#007acc] transition-colors shadow-inner">
+            <div className="w-24 h-24 bg-white dark:bg-[#1e1e1e] rounded-lg border-2 border-dashed border-slate-300 dark:border-[#444] flex items-center justify-center overflow-hidden cursor-pointer hover:border-[#007acc] transition-colors shadow-inner">
                 {workspace.icon ? (
                     <img src={workspace.icon} className="w-full h-full object-cover" />
                 ) : (
@@ -98,37 +98,37 @@ const ManifestEditor: React.FC<Props> = ({ workspace }) => {
                 )}
                 <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => handleImageUpload(e, true)} />
             </div>
-            <div className="absolute -bottom-2 -right-2 bg-[#007acc] p-1.5 rounded-lg shadow-lg pointer-events-none">
+            <div className="absolute -bottom-2 -right-2 bg-[#007acc] p-1.5 rounded-md shadow-lg pointer-events-none">
                 <Upload className="w-3 h-3 text-white" />
             </div>
         </div>
         
         <div className="flex-1 w-full space-y-4">
             <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Mod Title</label>
+                <label className="text-[11px] font-righteous text-slate-400 uppercase tracking-widest ml-1">Mod Title</label>
                 <input 
                     value={workspace.name}
                     onChange={(e) => handleUpdate('name', e.target.value)}
-                    className="w-full bg-transparent text-2xl md:text-3xl font-black text-slate-900 dark:text-white border-b-2 border-transparent focus:border-[#007acc] outline-none transition-all placeholder:text-slate-300"
+                    className="w-full bg-transparent text-2xl md:text-3xl font-righteous text-slate-900 dark:text-white border-b-2 border-transparent focus:border-[#007acc] outline-none transition-all placeholder:text-slate-300 tracking-wide"
                     placeholder="My Awesome Mod"
                 />
             </div>
             <div className="flex flex-wrap gap-4">
                 <div className="flex-1 min-w-[150px]">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Internal ID (Unique)</label>
+                    <label className="text-[11px] font-righteous text-slate-400 uppercase tracking-widest ml-1">Internal ID (Unique)</label>
                     <input 
                         value={workspace.internalId}
                         onChange={(e) => handleUpdate('internalId', e.target.value.replace(/\s+/g, ''))}
-                        className="w-full bg-white dark:bg-[#1e1e1e] border border-slate-200 dark:border-[#333] rounded-lg px-3 py-2 text-xs font-mono font-bold text-slate-700 dark:text-slate-200 shadow-sm focus:border-[#007acc] outline-none"
+                        className="w-full bg-white dark:bg-[#1e1e1e] border border-slate-200 dark:border-[#333] rounded-md px-3 py-2 text-xs font-mono font-bold text-slate-700 dark:text-slate-200 shadow-sm focus:border-[#007acc] outline-none"
                     />
                 </div>
                 <div className="w-24">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Version</label>
+                    <label className="text-[11px] font-righteous text-slate-400 uppercase tracking-widest ml-1">Version</label>
                     <input 
                         type="number"
                         value={workspace.version}
                         onChange={(e) => handleUpdate('version', parseInt(e.target.value))}
-                        className="w-full bg-white dark:bg-[#1e1e1e] border border-slate-200 dark:border-[#333] rounded-lg px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 text-center shadow-sm focus:border-[#007acc] outline-none"
+                        className="w-full bg-white dark:bg-[#1e1e1e] border border-slate-200 dark:border-[#333] rounded-md px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 text-center shadow-sm focus:border-[#007acc] outline-none"
                     />
                 </div>
             </div>
@@ -140,32 +140,32 @@ const ManifestEditor: React.FC<Props> = ({ workspace }) => {
           {/* LEFT COLUMN: Settings & Logic */}
           <div className="flex flex-col gap-8 lg:min-h-0">
               {/* GUID Section */}
-              <section className="bg-white dark:bg-[#1e1e1e] border border-slate-200 dark:border-[#333] rounded-xl overflow-hidden shrink-0">
+              <section className="bg-white dark:bg-[#1e1e1e] border border-slate-200 dark:border-[#333] rounded-lg overflow-hidden shrink-0">
                   <div className="p-4 bg-slate-50 dark:bg-[#252526] border-b border-slate-200 dark:border-[#333] flex justify-between items-center">
-                      <h3 className="text-xs font-black uppercase tracking-widest flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                      <h3 className="text-xs font-righteous uppercase tracking-widest flex items-center gap-2 text-slate-600 dark:text-slate-300">
                           <Globe className="w-4 h-4" /> Global Unique ID
                       </h3>
-                      <button onClick={handleRegenerateGuid} className="flex items-center gap-1 text-[10px] font-bold text-[#007acc] hover:underline">
+                      <button onClick={handleRegenerateGuid} className="flex items-center gap-1 text-[11px] font-bold text-[#007acc] hover:underline">
                           <RefreshCw className="w-3 h-3" /> Regenerate
                       </button>
                   </div>
                   <div className="p-6">
-                      <div className="bg-slate-100 dark:bg-[#252526] p-3 rounded-lg font-mono text-xs text-slate-500 break-all border border-slate-200 dark:border-[#333] select-all flex items-center justify-between group">
+                      <div className="bg-slate-100 dark:bg-[#252526] p-3 rounded-md font-mono text-xs text-slate-500 break-all border border-slate-200 dark:border-[#333] select-all flex items-center justify-between group">
                           <span>{workspace.settingsGuid}</span>
                       </div>
-                      <p className="text-[10px] text-slate-400 mt-2 italic">Unique identifier for mod browser & save compatibility.</p>
+                      <p className="text-[11px] text-slate-400 mt-2 italic">Unique identifier for mod browser & save compatibility.</p>
                   </div>
               </section>
 
               {/* AUTHORS Section */}
-              <section className="bg-white dark:bg-[#1e1e1e] border border-slate-200 dark:border-[#333] rounded-xl overflow-hidden flex flex-col lg:flex-1 lg:min-h-0">
+              <section className="bg-white dark:bg-[#1e1e1e] border border-slate-200 dark:border-[#333] rounded-lg overflow-hidden flex flex-col lg:flex-1 lg:min-h-0">
                   <div className="p-4 bg-slate-50 dark:bg-[#252526] border-b border-slate-200 dark:border-[#333] flex justify-between items-center shrink-0">
-                      <h3 className="text-xs font-black uppercase tracking-widest flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                      <h3 className="text-xs font-righteous uppercase tracking-widest flex items-center gap-2 text-slate-600 dark:text-slate-300">
                           <User className="w-4 h-4" /> Authors ({workspace.authors.length})
                       </h3>
                       <button 
                         onClick={() => setIsAddingAuthor(!isAddingAuthor)} 
-                        className={`p-1.5 rounded-lg transition-colors ${isAddingAuthor ? 'bg-rose-100 text-rose-500' : 'bg-slate-200 dark:bg-[#333] text-slate-500 hover:text-[#007acc]'}`}
+                        className={`p-1.5 rounded-md transition-colors ${isAddingAuthor ? 'bg-rose-100 text-rose-500' : 'bg-slate-200 dark:bg-[#333] text-slate-500 hover:text-[#007acc]'}`}
                       >
                           {isAddingAuthor ? <Trash2 className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
                       </button>
@@ -174,7 +174,7 @@ const ManifestEditor: React.FC<Props> = ({ workspace }) => {
                   <div className="p-4 space-y-4 lg:flex-1 flex flex-col lg:min-h-0">
                       {/* ADD AUTHOR FORM - FIXED */}
                       {isAddingAuthor && (
-                          <div className="p-4 bg-slate-50 dark:bg-[#252526] rounded-xl border-2 border-dashed border-slate-200 dark:border-[#333] space-y-3 animate-in fade-in slide-in-from-top-2 shrink-0">
+                          <div className="p-4 bg-slate-50 dark:bg-[#252526] rounded-lg border-2 border-dashed border-slate-200 dark:border-[#333] space-y-3 animate-in fade-in slide-in-from-top-2 shrink-0">
                               <div className="flex gap-3">
                                   {/* Avatar Wrapper */}
                                   <div className="relative w-10 h-10 shrink-0 bg-white dark:bg-[#333] rounded-full overflow-hidden border border-slate-200 dark:border-[#444] group cursor-pointer hover:border-[#007acc]">
@@ -215,14 +215,14 @@ const ManifestEditor: React.FC<Props> = ({ workspace }) => {
                                       </div>
                                   </div>
                               </div>
-                              <button onClick={handleAddAuthor} className="w-full py-2 bg-[#007acc] text-white text-[10px] font-black uppercase rounded-lg hover:bg-[#0062a3] transition-colors shadow-sm">Add Author</button>
+                              <button onClick={handleAddAuthor} className="w-full py-2 bg-[#007acc] text-white text-[11px] font-bold uppercase tracking-widest rounded-md hover:bg-[#0062a3] transition-colors shadow-sm">Add Author</button>
                           </div>
                       )}
 
                       {/* AUTHORS LIST */}
                       <div className="space-y-3 overflow-y-auto custom-scrollbar pr-1 lg:max-h-[none] max-h-[300px]">
                           {workspace.authors.map((author, idx) => (
-                              <div key={idx} className="group flex items-start gap-3 p-3 bg-slate-50 dark:bg-[#252526] rounded-xl border border-slate-100 dark:border-[#333] hover:border-[#007acc] transition-all shadow-sm">
+                              <div key={idx} className="group flex items-start gap-3 p-3 bg-slate-50 dark:bg-[#252526] rounded-lg border border-slate-100 dark:border-[#333] hover:border-[#007acc] transition-all shadow-sm">
                                   <div className="relative w-10 h-10 shrink-0 rounded-full overflow-hidden border border-slate-200 dark:border-[#444] cursor-pointer hover:opacity-80">
                                       {author.file ? <img src={author.file} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-slate-200 dark:bg-[#333] flex items-center justify-center text-[10px] font-bold text-slate-500">{author.name[0]?.toUpperCase()}</div>}
                                       <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => handleImageUpload(e, false, idx)} />
@@ -259,7 +259,7 @@ const ManifestEditor: React.FC<Props> = ({ workspace }) => {
                                               <input 
                                                 value={author.link}
                                                 onChange={(e) => handleAuthorChange(idx, 'link', e.target.value)}
-                                                className="bg-transparent text-[10px] text-slate-500 w-full outline-none border-b border-transparent focus:border-slate-200 hover:border-slate-200 transition-colors py-0.5"
+                                                className="bg-transparent text-[11px] text-slate-500 w-full outline-none border-b border-transparent focus:border-slate-200 hover:border-slate-200 transition-colors py-0.5"
                                                 placeholder="https://..."
                                               />
                                           </div>
@@ -272,9 +272,9 @@ const ManifestEditor: React.FC<Props> = ({ workspace }) => {
                               </div>
                           ))}
                           {workspace.authors.length === 0 && !isAddingAuthor && (
-                              <div className="flex flex-col items-center justify-center py-8 text-slate-400 border-2 border-dashed border-slate-200 dark:border-[#333] rounded-xl">
+                              <div className="flex flex-col items-center justify-center py-8 text-slate-400 border-2 border-dashed border-slate-200 dark:border-[#333] rounded-lg">
                                   <User className="w-8 h-8 mb-2 opacity-50" />
-                                  <p className="text-[10px] italic">No authors yet.</p>
+                                  <p className="text-[11px] italic">No authors yet.</p>
                               </div>
                           )}
                       </div>
@@ -283,24 +283,24 @@ const ManifestEditor: React.FC<Props> = ({ workspace }) => {
           </div>
 
           {/* RIGHT COLUMN: JSON Preview */}
-          <div className="flex flex-col h-full bg-[#1e1e1e] border border-slate-200 dark:border-[#333] rounded-xl overflow-hidden shadow-lg min-h-[400px]">
+          <div className="flex flex-col h-full bg-[#1e1e1e] border border-slate-200 dark:border-[#333] rounded-lg overflow-hidden shadow-lg min-h-[400px]">
             <div className="p-4 bg-[#252526] border-b border-[#333] flex items-center justify-between shrink-0">
                <div className="flex items-center gap-2">
                   <Code className="w-4 h-4 text-[#007acc]" />
-                  <span className="text-xs font-black text-white uppercase tracking-widest">Settings.json</span>
+                  <span className="text-sm font-righteous text-white uppercase tracking-widest">Settings.json</span>
                </div>
                <button 
                 onClick={() => {
                     navigator.clipboard.writeText(JSON.stringify(settingsJson, null, 4));
                     toast.success("JSON copied!");
                 }}
-                className="text-[9px] font-bold uppercase text-slate-400 hover:text-white transition-colors bg-[#333] px-2 py-1 rounded"
+                className="text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors bg-[#333] px-2 py-1 rounded-md"
                >
                    Copy
                </button>
             </div>
             <div className="flex-1 p-6 overflow-auto custom-scrollbar bg-[#1e1e1e]">
-              <pre className="font-mono text-[10px] sm:text-xs text-[#abb2bf] leading-relaxed whitespace-pre-wrap">
+              <pre className="font-mono text-[11px] sm:text-xs text-[#abb2bf] leading-relaxed whitespace-pre-wrap">
                 {JSON.stringify(settingsJson, null, 4)}
               </pre>
             </div>

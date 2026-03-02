@@ -2,11 +2,13 @@ import React, { useEffect } from 'react';
 import { useEditorStore } from './store';
 import Dashboard from './components/workspace/Dashboard';
 import Editor from './components/editor/Editor';
-import TextureManager from './components/editor/TextureManager'; // Importe o TextureManager
-import Header from './components/editor/Header'; // Header agora fica no App
+import TextureManager from './components/editor/TextureManager'; 
+import LocalizationEditor from './components/editor/LocalizationEditor';
+import Header from './components/editor/Header'; 
 import GlobalSettingsModal from './components/GlobalSettingsModal';
 import { Toaster } from 'sonner';
 import { Loader2 } from 'lucide-react';
+import HooksEditor from './components/editor/HooksEditor';
 
 const App: React.FC = () => {
   const { activeWorkspaceId, theme, _hasHydrated, viewMode } = useEditorStore();
@@ -47,13 +49,17 @@ const App: React.FC = () => {
       {/* Header Fixo Global */}
       <Header />
 
-      {/* Área Principal - Alterna entre Editor e TextureManager */}
+      {/* Área Principal - Alterna entre Editor, TextureManager, HooksEditor e LocalizationEditor */}
       <div className="flex-1 overflow-hidden relative">
-        {viewMode === 'textures' ? (
-          <TextureManager />
-        ) : (
-          <Editor />
-        )}
+        {viewMode === 'entities' || viewMode === 'files' ? (
+           <Editor />
+        ) : viewMode === 'textures' ? (
+           <TextureManager />
+        ) : viewMode === 'hooks' ? (
+           <HooksEditor />
+        ) : viewMode === 'localization' ? (
+           <LocalizationEditor />
+        ) : null}
       </div>
 
       <GlobalSettingsModal />

@@ -11,7 +11,7 @@ import { oneDarkHighlightStyle } from "@codemirror/theme-one-dark";
 import { syntaxHighlighting, foldKeymap, foldGutter, bracketMatching, indentUnit } from "@codemirror/language";
 import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
 import { autocompletion, completionKeymap, closeBrackets, moveCompletionSelection, completionStatus } from "@codemirror/autocomplete";
-import { createTlAutocomplete, tlLinter, tlHover } from '../../../services/languageService';
+import { tlAutocomplete, tlLinter, tlHover } from '../../../services/languageService';
 
 interface Props {
   entity: ModEntity;
@@ -71,6 +71,13 @@ const EntityEditor = forwardRef<EditorHandle, Props>(({ entity }, ref) => {
           minWidth: "250px",
           boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)"
       },
+      ".cm-tooltip-autocomplete > ul": {
+          scrollbarWidth: "none", /* Firefox */
+          "-ms-overflow-style": "none", /* IE e Edge */
+      },
+      ".cm-tooltip-autocomplete > ul::-webkit-scrollbar": {
+          display: "none" /* Chrome, Safari e Opera */
+      },
       ".cm-tooltip-autocomplete > ul > li": { padding: "4px 8px", lineHeight: "1.5" },
       ".cm-tooltip-autocomplete > ul > li[aria-selected]": { backgroundColor: "#007acc30", color: isDark ? "#fff" : "#000" },
       
@@ -96,17 +103,20 @@ const EntityEditor = forwardRef<EditorHandle, Props>(({ entity }, ref) => {
     const state = EditorState.create({
       doc: entity.code,
       extensions: [
-        lineNumbers(), highlightActiveLineGutter(), foldGutter(), history(), bracketMatching(), closeBrackets(), javascript(),
-        isDark ? syntaxHighlighting(oneDarkHighlightStyle) : [], 
-        editorThemeConfig, 
-        indentUnit.of("    "), 
-        EditorState.tabSize.of(4),
-        tlHover, tlLinter,
-        autocompletion({ override: [createTlAutocomplete(entity.folder || '')], icons: true, defaultKeymap: true, maxRenderedOptions: 50 }),
+        lineNumbers(),
+        highlightActiveLineGutter(),
+        javascript(),
+        syntaxHighlighting(oneDarkHighlightStyle),
+        editorThemeConfig,
+        bracketMatching(),
+        closeBrackets(),
+        indentUnit.of("    "),
+        tlHover, 
+        tlLinter,
+        autocompletion({ override: [tlAutocomplete] }),
         userProfile.wordWrap ? EditorView.lineWrapping : [],
         keymap.of([ 
-            indentWithTab,
-            ...mobileNavKeymap, 
+            indentWithTab, 
             ...defaultKeymap, 
             ...historyKeymap, 
             ...foldKeymap, 

@@ -61,22 +61,22 @@ const RenameModal: React.FC = () => {
       <div 
         className={`
           fixed z-[10001] bg-white dark:bg-[#1e1e1e] border border-slate-200 dark:border-[#333] shadow-2xl overflow-hidden flex flex-col
-          ${isMobile ? 'inset-x-4 top-1/2 -translate-y-1/2 rounded-2xl' : 'w-80 rounded-xl animate-in zoom-in-95 duration-100'}
+          ${isMobile ? 'inset-x-4 top-1/2 -translate-y-1/2 rounded-xl' : 'w-80 rounded-xl animate-in zoom-in-95 duration-100'}
         `}
         style={isMobile ? {} : desktopStyle}
         onClick={e => e.stopPropagation()}
       >
         <div className="p-4 bg-slate-50 dark:bg-[#252526] border-b border-slate-200 dark:border-[#333] flex items-center justify-between">
-          <h3 className="text-xs font-black uppercase tracking-widest text-slate-700 dark:text-white flex items-center gap-2">
+          <h3 className="text-sm font-righteous uppercase tracking-wide text-slate-700 dark:text-white flex items-center gap-2">
             <Pencil className="w-4 h-4" /> Rename {renameModal.type}
           </h3>
-          <button onClick={closeRenameModal} className="text-slate-400 hover:text-slate-900 dark:hover:text-white">
+          <button onClick={closeRenameModal} className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
             <X className="w-4 h-4" />
           </button>
         </div>
 
         <form onSubmit={handleRename} className="p-5 space-y-4">
-          <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700">
+          <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-700 transition-colors focus-within:border-[#007acc] dark:focus-within:border-[#007acc]">
             {renameModal.type === 'folder' ? <Folder className="w-5 h-5 text-slate-400" /> : <FileText className="w-5 h-5 text-slate-400" />}
             <div className="relative w-full">
                 <input 
@@ -92,7 +92,7 @@ const RenameModal: React.FC = () => {
 
           <button 
             type="submit"
-            className="w-full py-3 bg-[#007acc] hover:bg-[#0062a3] text-white text-xs font-black uppercase tracking-widest rounded-xl shadow-lg transition-all active:scale-95"
+            className="w-full py-3 bg-[#007acc] hover:bg-[#0062a3] text-white text-xs font-bold uppercase tracking-widest rounded-lg shadow-md transition-all active:scale-95"
           >
             Save Changes
           </button>

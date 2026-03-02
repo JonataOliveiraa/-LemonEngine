@@ -1,23 +1,37 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { useEditorStore } from '../../store';
 import { EntityType } from '../../types';
 import { 
-  Plus, ChevronDown, ChevronRight, Folder, FileCode, FileJson, X, Box, Ghost, Target, Zap, Compass, Palette, Cloud, Globe, Layout, Layers, FolderPlus, Terminal, Trash2, FolderInput
+  Plus, ChevronDown, ChevronRight, Folder, FileCode, FileJson, X, FolderPlus, Terminal, Trash2, FolderInput, Box
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-const CATEGORIES_LIST = [
-  { id: EntityType.ITEM, label: 'Items', icon: <Box className="w-4 h-4" /> },
-  { id: EntityType.NPC, label: 'NPCs', icon: <Ghost className="w-4 h-4" /> },
-  { id: EntityType.PROJECTILE, label: 'Projectiles', icon: <Target className="w-4 h-4" /> },
-  { id: EntityType.BUFF, label: 'Buffs', icon: <Zap className="w-4 h-4" /> },
-  { id: EntityType.BIOME, label: 'Biomes', icon: <Compass className="w-4 h-4" /> },
-  { id: EntityType.BACKGROUND, label: 'Backgrounds', icon: <Palette className="w-4 h-4" /> },
-  { id: EntityType.CLOUD, label: 'Clouds', icon: <Cloud className="w-4 h-4" /> },
-  { id: EntityType.GLOBAL, label: 'Global', icon: <Globe className="w-4 h-4" /> },
-  { id: EntityType.MENU, label: 'Menus', icon: <Layout className="w-4 h-4" /> },
-  { id: EntityType.SUBWORLD, label: 'Subworlds', icon: <Layers className="w-4 h-4" /> },
-];
+// Mapeamento: Categoria -> Nome da Pasta Visual
+const CATEGORY_TO_FOLDER: Record<string, string> = {
+  [EntityType.ITEM]: 'Items',
+  [EntityType.NPC]: 'NPCs',
+  [EntityType.PROJECTILE]: 'Projectiles',
+  [EntityType.BUFF]: 'Buffs',
+  [EntityType.BIOME]: 'Biomes',
+  [EntityType.BACKGROUND]: 'Backgrounds',
+  [EntityType.CLOUD]: 'Clouds',
+  [EntityType.GLOBAL]: 'Global',
+  [EntityType.MENU]: 'Menus',
+  [EntityType.SUBWORLD]: 'Subworlds',
+  [EntityType.TILE]: 'Tiles',
+  [EntityType.SYSTEM]: 'Systems',
+  [EntityType.PET]: 'Pets',
+  [EntityType.BLANK]: '' 
+};
+
+interface TreeNode {
+  name: string;
+  path: string; 
+  type: 'folder' | 'file';
+  category?: EntityType; 
+  entityId?: string;
+  children: Record<string, TreeNode>;
+}
 
 const Sidebar: React.FC = () => {
   const { 
@@ -30,14 +44,11 @@ const Sidebar: React.FC = () => {
   const workspace = workspaces.find(w => w.id === activeWorkspaceId);
   const scrollRef = useRef<HTMLDivElement>(null);
   
-  // -- ESTADOS PARA GESTOS --
-  const longPressTimer = useRef<NodeJS.Timeout | null>(null); 
   const dragTimer = useRef<NodeJS.Timeout | null>(null); 
-  
   const [isDragging, setIsDragging] = useState(false);
-  const [dragItem, setDragItem] = useState<{ id: string, name: string, category: EntityType } | null>(null);
+  const [dragItem, setDragItem] = useState<{ id: string, name: string } | null>(null);
   const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
-  const [dropTarget, setDropTarget] = useState<{ path: string, category: EntityType } | null>(null);
+  const [dropTarget, setDropTarget] = useState<string | null>(null);
 
   useEffect(() => {
     if (activeEntityId) {
@@ -46,221 +57,268 @@ const Sidebar: React.FC = () => {
     }
   }, [activeEntityId]);
 
-  // --- AUTO SCROLL LOGIC ---
-  useEffect(() => {
-    if (!isDragging) return;
-    const interval = setInterval(() => {
-        if (!scrollRef.current) return;
-        const { top, bottom } = scrollRef.current.getBoundingClientRect();
-        const y = dragPosition.y;
-        if (y < top + 50) scrollRef.current.scrollTop -= 10;
-        else if (y > bottom - 50) scrollRef.current.scrollTop += 10;
-    }, 20);
-    return () => clearInterval(interval);
-  }, [isDragging, dragPosition.y]);
+  const fileTree = useMemo(() => {
+    const root: TreeNode = { name: 'root', path: '', type: 'folder', children: {} };
+    if (!workspace) return root;
 
-  const handleCreateClick = (e: React.MouseEvent, category: EntityType, path: string = '') => {
-    e.stopPropagation();
-    openCreationModal(category, path);
+    const insertNode = (pathParts: string[], nodeData: Partial<TreeNode>) => {
+        let current = root;
+        let pathAccumulator = '';
+
+        pathParts.forEach((part, idx) => {
+            const isLast = idx === pathParts.length - 1;
+            pathAccumulator = pathAccumulator ? `${pathAccumulator}/${part}` : part;
+
+            if (!current.children[part]) {
+                current.children[part] = { 
+                    name: part, 
+                    path: pathAccumulator, 
+                    type: 'folder',
+                    children: {} 
+                };
+            }
+
+            if (isLast && nodeData.type === 'file') {
+                current.children[part] = { 
+                    ...current.children[part], 
+                    ...nodeData,
+                    name: part, 
+                    path: pathAccumulator 
+                } as TreeNode;
+            } else {
+                current = current.children[part];
+            }
+        });
+        return current;
+    };
+
+    // 1. Inserir Pastas Vazias
+    Object.entries(workspace.emptyFolders).forEach(([cat, paths]) => {
+       const catFolder = CATEGORY_TO_FOLDER[cat as EntityType];
+       paths.forEach(p => {
+           const fullPath = catFolder ? (p ? `${catFolder}/${p}` : catFolder) : p;
+           if (!fullPath) return;
+           insertNode(fullPath.split('/'), { type: 'folder', category: cat as EntityType });
+       });
+    });
+
+    // 2. Inserir Entidades
+    workspace.entities.forEach(entity => {
+        const catFolder = CATEGORY_TO_FOLDER[entity.category];
+        let pathParts: string[] = [];
+        if (catFolder) pathParts.push(catFolder);
+        if (entity.folder) pathParts.push(...entity.folder.split('/'));
+        pathParts.push(`${entity.internalName}.js`);
+
+        insertNode(pathParts, { 
+            type: 'file', 
+            entityId: entity.id, 
+            category: entity.category 
+        });
+    });
+
+    return root;
+  }, [workspace]);
+
+  const getContextFromPath = (path: string) => {
+      const rootFolder = path.split('/')[0];
+      const systemCategory = Object.entries(CATEGORY_TO_FOLDER).find(([_, v]) => v && v === rootFolder)?.[0] as EntityType | undefined;
+      const category = systemCategory || EntityType.BLANK;
+      let dbFolder = path;
+
+      if (systemCategory) {
+          dbFolder = path.replace(rootFolder, '').replace(/^\//, '');
+      }
+
+      return { category, dbFolder, isSystemRoot: !!systemCategory && path === rootFolder };
   };
 
-  const handleDeleteClick = (e: React.MouseEvent, type: 'entity' | 'folder', id: string, name: string, category?: EntityType) => {
-    e.stopPropagation();
-    openDeleteConfirmation({ type, id, name, category, position: { x: e.clientX, y: e.clientY } });
+  const handleCreateFile = (e: React.MouseEvent, path: string) => {
+      e.stopPropagation();
+      const { category, dbFolder } = getContextFromPath(path);
+      openCreationModal(category, dbFolder);
   };
 
-  // --- RENAME HANDLERS ---
-  const triggerRename = (type: 'entity' | 'folder', id: string, name: string, category?: EntityType, x?: number, y?: number) => {
-    openRenameModal({ type, id, currentName: name, category, position: x && y ? { x, y } : undefined });
+  const handleCreateFolder = (e: React.MouseEvent, path: string) => {
+      e.stopPropagation();
+      const { category, dbFolder } = getContextFromPath(path);
+      openCreateFolderModal(category, dbFolder);
   };
 
-  const handleDoubleClick = (e: React.MouseEvent, type: 'entity' | 'folder', id: string, name: string, category?: EntityType) => {
-    e.stopPropagation();
-    triggerRename(type, id, name, category, e.clientX, e.clientY);
+  const handleDelete = (e: React.MouseEvent, node: TreeNode) => {
+      e.stopPropagation();
+      
+      const clickPosition = { x: e.clientX, y: e.clientY };
+
+      if (node.type === 'file' && node.entityId) {
+          openDeleteConfirmation({ 
+              type: 'entity', 
+              id: node.entityId, 
+              name: node.name,
+              position: clickPosition 
+          });
+      } else {
+          const { category, dbFolder, isSystemRoot } = getContextFromPath(node.path);
+          
+          if (isSystemRoot) {
+              toast.error("Cannot delete system root folders.");
+              return;
+          }
+          
+          openDeleteConfirmation({ 
+              type: 'folder', 
+              id: dbFolder, 
+              name: node.name, 
+              category: category,
+              position: clickPosition 
+          });
+      }
   };
 
-  const handleTouchStartRename = (type: 'entity' | 'folder', id: string, name: string, category?: EntityType) => {
-    longPressTimer.current = setTimeout(() => triggerRename(type, id, name, category), 2000);
-  };
-
-  const handleTouchEndRename = () => {
-    if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; }
-  };
-
-  // --- DRAG AND DROP HANDLERS (DESKTOP) ---
-  const handleMouseDown = (e: React.MouseEvent, id: string, name: string, category: EntityType) => {
+  const handleMouseDown = (e: React.MouseEvent, id: string, name: string) => {
     if (e.button !== 0) return;
-    e.persist();
-    dragTimer.current = setTimeout(() => {
-        setIsDragging(true);
-        setDragItem({ id, name, category });
-    }, 350); 
+    dragTimer.current = setTimeout(() => { setIsDragging(true); setDragItem({ id, name }); }, 300);
   };
-
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (dragTimer.current && !isDragging) {
-        clearTimeout(dragTimer.current);
-        dragTimer.current = null;
-    }
-    if (isDragging) {
-        setDragPosition({ x: e.clientX, y: e.clientY });
-    }
+    if (dragTimer.current && !isDragging) { clearTimeout(dragTimer.current); dragTimer.current = null; }
+    if (isDragging) setDragPosition({ x: e.clientX, y: e.clientY });
   };
-
   const handleMouseUp = () => {
-    if (dragTimer.current) { clearTimeout(dragTimer.current); dragTimer.current = null; }
-    
+    if (dragTimer.current) clearTimeout(dragTimer.current);
     if (isDragging && dragItem && dropTarget && activeWorkspaceId) {
-        if (dropTarget.category === dragItem.category) {
-            moveEntity(activeWorkspaceId, dragItem.id, dropTarget.path);
-            toast.success(`Moved to /${dropTarget.path || 'Root'}`);
-        }
+        const { dbFolder } = getContextFromPath(dropTarget);
+        moveEntity(activeWorkspaceId, dragItem.id, dbFolder);
+        toast.success(`Moved to /${dbFolder || 'Root'}`);
     }
-    
-    setIsDragging(false);
-    setDragItem(null);
-    setDropTarget(null);
+    setIsDragging(false); setDragItem(null); setDropTarget(null);
   };
 
-  const handleDragOverFolder = (path: string, category: EntityType) => {
-    if (isDragging && dragItem && dragItem.category === category) {
-        setDropTarget({ path, category });
-    }
-  };
+  const renderTree = (node: TreeNode) => {
+      const nodes = Object.values(node.children).sort((a, b) => {
+          if (a.type !== b.type) return a.type === 'folder' ? -1 : 1; 
+          return a.name.localeCompare(b.name);
+      });
 
-  const renderFolderStructure = (category: EntityType, currentPath: string = '') => {
-    // BLINDAGEM CONTRA UNDEFINED
-    const entities = workspace?.entities || [];
-    // Acesso seguro a emptyFolders com fallback duplo
-    const emptyFoldersList = workspace?.emptyFolders?.[category] || [];
-
-    const inCurrentFolder = entities.filter(e => e.category === category && (e.folder || '') === currentPath);
-    
-    const subfolders = Array.from(new Set<string>([
-      // Pastas derivadas de entidades existentes
-      ...(entities
-          .filter(e => e.category === category && e.folder?.startsWith(currentPath ? currentPath + '/' : ''))
-          .map(e => (currentPath ? e.folder!.replace(currentPath + '/', '') : e.folder!).split('/')[0])
-          .filter(Boolean)
-      ),
-      // Pastas vazias explícitas
-      ...(emptyFoldersList
-        .filter(f => currentPath === '' ? !f.includes('/') : f.startsWith(currentPath + '/') && f.replace(currentPath + '/', '').split('/').length === 1)
-        .map(f => currentPath === '' ? f : f.replace(currentPath + '/', ''))
-      )
-    ])).sort();
-
-    return (
-      <div className="space-y-0.5">
-        {subfolders.map(folderName => {
-          const fullPath = currentPath ? `${currentPath}/${folderName}` : folderName;
-          const folderKey = `folder-${category}-${fullPath}`;
-          const isExpanded = expandedFolders[folderKey];
-          const isDropTarget = isDragging && dropTarget?.path === fullPath;
-
-          return (
-            <div key={fullPath}>
-              <div 
-                className={`flex items-center w-full top-0 px-2 py-1.5 md:py-1 cursor-pointer group transition-colors select-none touch-manipulation ${isDropTarget ? 'bg-[#007acc]/20 border-2 border-[#007acc]' : 'hover:bg-slate-200 dark:hover:bg-[#2a2d2e]'}`}
-                onClick={() => toggleFolder(folderKey)}
-                onDoubleClick={(e) => handleDoubleClick(e, 'folder', fullPath, folderName, category)}
-                onTouchStart={() => handleTouchStartRename('folder', fullPath, folderName, category)}
-                onTouchEnd={handleTouchEndRename}
-                onTouchMove={handleTouchEndRename}
-                onMouseEnter={() => handleDragOverFolder(fullPath, category)}
-              >
-                <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                  {isExpanded ? <ChevronDown className="w-3 h-3 text-slate-400" /> : <ChevronRight className="w-3 h-3 text-slate-400" />}
-                  <Folder className={`w-3.5 h-3.5 ${isDropTarget ? 'text-[#007acc]' : 'text-slate-400 dark:text-slate-500'} shrink-0`} />
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate font-medium">{folderName}</span>
-                </div>
-                {/* Ações */}
-                <div className="flex items-center gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity pr-1">
-                  <button onClick={(e) => handleDeleteClick(e, 'folder', fullPath, folderName, category)} className="p-1 hover:bg-rose-100 dark:hover:bg-rose-900/30 rounded text-slate-400 hover:text-rose-500 transition-colors"><Trash2 className="w-3 h-3" /></button>
-                  <button onClick={e => { e.stopPropagation(); openCreateFolderModal(category, fullPath); }} className="p-1 hover:bg-slate-300 dark:hover:bg-[#37373d] rounded text-slate-500"><FolderPlus className="w-3 h-3" /></button>
-                  <button onClick={(e) => handleCreateClick(e, category, fullPath)} className="p-1 hover:bg-slate-300 dark:hover:bg-[#37373d] rounded text-slate-500"><Plus className="w-3 h-3" /></button>
-                </div>
-              </div>
-              {isExpanded && <div className="ml-3 border-l border-slate-200 dark:border-[#333] mb-1">{renderFolderStructure(category, fullPath)}</div>}
-            </div>
-          );
-        })}
-        
-        {inCurrentFolder.map(e => (
-          <div key={e.id} className="relative group/item select-none touch-manipulation">
-              <button 
-                id={`tree-item-${e.id}`}
-                onClick={() => { setActiveEntity(e.id); if (window.innerWidth < 1024) setSidebarOpen(false); }}
-                onDoubleClick={(ev) => handleDoubleClick(ev, 'entity', e.id, e.internalName)}
-                onTouchStart={() => handleTouchStartRename('entity', e.id, e.internalName)}
-                onTouchEnd={handleTouchEndRename}
-                onTouchMove={handleTouchEndRename}
-                onMouseDown={(ev) => handleMouseDown(ev, e.id, e.internalName, category)}
-                className={`w-full flex items-center gap-2 px-4 py-2 md:py-1 transition-colors text-left ${activeEntityId === e.id ? 'bg-slate-300 dark:bg-[#37373d] text-slate-900 dark:text-white font-bold' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-[#2a2d2e]'} ${isDragging && dragItem?.id === e.id ? 'opacity-50' : ''}`}
-              >
-                <FileCode className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                <span className="truncate text-[11px] flex-1">{e.internalName}.js</span>
-              </button>
-              <button 
-                onClick={(ev) => handleDeleteClick(ev, 'entity', e.id, e.internalName)}
-                className="absolute right-1 top-1/2 -translate-y-1/2 p-1 hover:bg-rose-100 dark:hover:bg-rose-900/30 rounded text-slate-400 hover:text-rose-500 transition-colors opacity-100 lg:opacity-0 lg:group-hover/item:opacity-100"
-              >
-                  <Trash2 className="w-3 h-3" />
-              </button>
+      return (
+          <div className="pl-3 border-l border-slate-200 dark:border-[#333] ml-1.5 mt-0.5">
+              {nodes.map(child => {
+                  const isExpanded = expandedFolders[child.path];
+                  const isDropTarget = isDragging && dropTarget === child.path;
+                  
+                  if (child.type === 'folder') {
+                      return (
+                          <div key={child.path}>
+                              <div 
+                                  className={`flex items-center group py-1.5 pr-2 cursor-pointer rounded-lg select-none transition-colors ${isDropTarget ? 'bg-[#007acc]/20 border border-[#007acc]' : 'hover:bg-slate-100 dark:hover:bg-[#2a2d2e]'}`}
+                                  onClick={() => toggleFolder(child.path)}
+                                  onMouseEnter={() => isDragging && setDropTarget(child.path)}
+                              >
+                                  <div className="mr-1 text-slate-400">
+                                      {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                                  </div>
+                                  <div className="mr-1.5 text-[#007acc]">
+                                      <Folder className="w-3.5 h-3.5 fill-current" />
+                                  </div>
+                                  <span className="text-xs font-medium text-slate-700 dark:text-slate-300 flex-1 truncate">
+                                      {child.name}
+                                  </span>
+                                  
+                                  <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity gap-0.5">
+                                      {!child.category && (
+                                          <button onClick={(e) => handleDelete(e, child)} className="p-1 hover:bg-rose-500/20 text-slate-400 hover:text-rose-500 rounded-md transition-colors"><Trash2 className="w-3 h-3" /></button>
+                                      )}
+                                      <button onClick={(e) => handleCreateFolder(e, child.path)} className="p-1 hover:bg-slate-300 dark:hover:bg-[#444] rounded-md text-slate-500 transition-colors"><FolderPlus className="w-3 h-3" /></button>
+                                      <button onClick={(e) => handleCreateFile(e, child.path)} className="p-1 hover:bg-slate-300 dark:hover:bg-[#444] rounded-md text-slate-500 transition-colors"><Plus className="w-3 h-3" /></button>
+                                  </div>
+                              </div>
+                              {isExpanded && renderTree(child)}
+                          </div>
+                      );
+                  } else {
+                      return (
+                          <div 
+                              key={child.path} 
+                              id={`tree-item-${child.entityId}`}
+                              className={`flex items-center group py-1.5 pl-5 pr-2 cursor-pointer rounded-lg mb-0.5 select-none transition-colors ${activeEntityId === child.entityId ? 'bg-[#007acc]/10 text-[#007acc] font-bold' : 'hover:bg-slate-100 dark:hover:bg-[#2a2d2e] text-slate-500 dark:text-slate-400'} ${isDragging && dragItem?.id === child.entityId ? 'opacity-50' : ''}`}
+                              onClick={() => child.entityId && setActiveEntity(child.entityId)}
+                              onMouseDown={(e) => child.entityId && handleMouseDown(e, child.entityId, child.name)}
+                          >
+                              <FileCode className="w-3.5 h-3.5 mr-2 shrink-0 opacity-70" />
+                              <span className="text-xs truncate flex-1">{child.name}</span>
+                              <button onClick={(e) => handleDelete(e, child)} className="p-1 opacity-0 group-hover:opacity-100 hover:text-rose-500 rounded-md hover:bg-rose-500/10 transition-all"><Trash2 className="w-3 h-3" /></button>
+                          </div>
+                      );
+                  }
+              })}
           </div>
-        ))}
-      </div>
-    );
+      );
   };
 
   return (
     <div 
-        className="h-full bg-slate-50 dark:bg-[#252526] flex flex-col overflow-hidden select-none w-full"
+        className="h-full bg-slate-50 dark:bg-[#252526] flex flex-col overflow-hidden w-full border-r border-slate-200 dark:border-[#333]"
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
     >
       <div className="p-4 border-b border-slate-200 dark:border-[#333] flex items-center justify-between bg-white dark:bg-[#252526] shrink-0">
-        <h2 className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Explorer</h2>
-        <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-2 text-slate-400 hover:text-slate-900"><X className="w-5 h-5" /></button>
+        <h2 className="text-xs font-righteous text-slate-400 dark:text-slate-500 uppercase tracking-widest">Explorer</h2>
+        <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-2 hover:bg-slate-100 dark:hover:bg-[#333] rounded-lg text-slate-400 transition-colors"><X className="w-5 h-5" /></button>
       </div>
       
-      <div ref={scrollRef} className="flex-1 overflow-y-auto custom-scrollbar">
-        <div onClick={() => toggleFolder('content')} className="flex items-center w-full px-4 py-3 md:py-2 text-[10px] text-slate-600 dark:text-slate-300 font-bold uppercase tracking-wider bg-slate-200 dark:bg-[#333333] cursor-pointer sticky top-0 z-10 transition-colors">
-          {expandedFolders.content ? <ChevronDown className="w-3.5 h-3.5 mr-2" /> : <ChevronRight className="w-3.5 h-3.5 mr-2" />}
-          MOD CONTENT
+      <div ref={scrollRef} className="flex-1 overflow-y-auto custom-scrollbar pb-20">
+        <div 
+            onClick={() => toggleFolder('content')} 
+            className="flex items-center justify-between w-full px-4 py-2.5 bg-slate-200 dark:bg-[#333333] cursor-pointer sticky top-0 z-10 border-b border-slate-300 dark:border-[#444] group mt-0 transition-colors"
+            onMouseEnter={() => isDragging && setDropTarget('')}
+        >
+            <div className="flex items-center">
+                {expandedFolders.content ? <ChevronDown className="w-3.5 h-3.5 mr-2 text-slate-500" /> : <ChevronRight className="w-3.5 h-3.5 mr-2 text-slate-500" />}
+                <span className="text-xs font-righteous uppercase tracking-widest text-slate-700 dark:text-slate-200">Mod Content</span>
+            </div>
+            
+            <div className="flex items-center gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+               <button 
+                  onClick={(e) => { e.stopPropagation(); openCreateFolderModal(EntityType.BLANK, ''); }} 
+                  className="p-1.5 hover:bg-slate-300 dark:hover:bg-[#444] rounded-md text-slate-600 dark:text-slate-300 transition-colors"
+                  title="New Folder (Root)"
+               >
+                  <FolderPlus className="w-3.5 h-3.5" />
+               </button>
+               <button 
+                  onClick={(e) => { e.stopPropagation(); openCreationModal(EntityType.BLANK, ''); }} 
+                  className="p-1.5 hover:bg-slate-300 dark:hover:bg-[#444] rounded-md text-slate-600 dark:text-slate-300 transition-colors"
+                  title="New File (Root)"
+               >
+                  <Plus className="w-3.5 h-3.5" />
+               </button>
+            </div>
         </div>
+
         {expandedFolders.content && (
-          <div className="pt-1">
-            {CATEGORIES_LIST.map(cat => (
-              <div key={cat.id}>
-                <div 
-                    className={`flex items-center w-full px-3 py-2 md:py-1.5 cursor-pointer group transition-colors ${isDragging && dropTarget?.category === cat.id && dropTarget?.path === '' ? 'bg-[#007acc]/20 border-l-2 border-[#007acc]' : 'hover:bg-slate-200 dark:hover:bg-[#2a2d2e]'}`} 
-                    onClick={() => toggleFolder(cat.id)}
-                    onMouseEnter={() => handleDragOverFolder('', cat.id)} // Root drop
-                >
-                  {expandedFolders[cat.id] ? <ChevronDown className="w-3.5 h-3.5 text-slate-400 mr-2" /> : <ChevronRight className="w-3.5 h-3.5 text-slate-400 mr-2" />}
-                  <div className="text-slate-400 mr-2">{cat.icon}</div>
-                  <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 flex-1 uppercase tracking-tight">{cat.label}</span>
-                  <div className="flex items-center gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
-                    <button onClick={e => { e.stopPropagation(); openCreateFolderModal(cat.id); }} className="p-1 hover:bg-slate-300 dark:hover:bg-[#37373d] rounded text-slate-500"><FolderPlus className="w-3.5 h-3.5" /></button>
-                    <button onClick={(e) => handleCreateClick(e, cat.id, '')} className="p-1 hover:bg-slate-300 dark:hover:bg-[#37373d] rounded text-slate-500"><Plus className="w-3.5 h-3.5" /></button>
-                  </div>
-                </div>
-                {expandedFolders[cat.id] && <div className="ml-2 border-l border-slate-200 dark:border-[#333] mb-2">{renderFolderStructure(cat.id)}</div>}
-              </div>
-            ))}
-          </div>
+            <div className="py-2 pr-2">
+                {renderTree(fileTree)}
+                {/* MENSAGEM SE ESTIVER VAZIO */}
+                {Object.keys(fileTree.children).length === 0 && (
+                    <div className="px-6 py-6 text-center opacity-40">
+                        <Box className="w-8 h-8 mx-auto mb-2 text-slate-400" />
+                        <p className="text-[10px] font-righteous text-slate-500 uppercase tracking-widest">Empty Content</p>
+                    </div>
+                )}
+            </div>
         )}
-        <div className="mt-4 pb-12">
-          {/* ... Root System (main.js, settings) ... */}
-          <div className="flex items-center w-full px-4 py-3 md:py-2 text-[10px] text-slate-600 dark:text-slate-300 font-bold uppercase tracking-wider bg-slate-200 dark:bg-[#333333] cursor-pointer sticky top-0 z-10">ROOT SYSTEM</div>
-          <button id="tree-item-main" onClick={() => { setActiveEntity('main'); if(window.innerWidth < 1024) setSidebarOpen(false); }} className={`w-full flex items-center gap-2 px-4 py-3 md:py-2 text-[11px] transition-all ${activeEntityId === 'main' ? 'bg-[#007acc] text-white font-bold' : 'text-slate-400 hover:bg-slate-200 dark:hover:bg-[#2a2d2e]'}`}><Terminal className="w-3.5 h-3.5 text-rose-500" /> main.js</button>
-          <button id="tree-item-settings" onClick={() => { setActiveEntity('settings'); if(window.innerWidth < 1024) setSidebarOpen(false); }} className={`w-full flex items-center gap-2 px-4 py-3 md:py-2 text-[11px] transition-all ${activeEntityId === 'settings' ? 'bg-[#007acc] text-white font-bold' : 'text-slate-400 hover:bg-slate-200 dark:hover:bg-[#2a2d2e]'}`}><FileJson className="w-3.5 h-3.5 text-blue-500" /> Settings.json</button>
+
+        <div className="mt-4">
+          <div className="flex items-center w-full px-4 py-2.5 text-xs text-slate-400 font-righteous uppercase tracking-widest border-b border-slate-200 dark:border-[#333] mb-1">System</div>
+          <button onClick={() => setActiveEntity('main')} className={`w-full flex items-center gap-2 px-4 py-2 text-[11px] transition-colors rounded-none ${activeEntityId === 'main' ? 'bg-[#007acc]/10 text-[#007acc] font-bold border-r-2 border-[#007acc]' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-[#2a2d2e] border-r-2 border-transparent'}`}>
+              <Terminal className="w-3.5 h-3.5" /> main.js
+          </button>
+          <button onClick={() => setActiveEntity('settings')} className={`w-full flex items-center gap-2 px-4 py-2 text-[11px] transition-colors rounded-none ${activeEntityId === 'settings' ? 'bg-[#007acc]/10 text-[#007acc] font-bold border-r-2 border-[#007acc]' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-[#2a2d2e] border-r-2 border-transparent'}`}>
+              <FileJson className="w-3.5 h-3.5" /> Settings.json
+          </button>
         </div>
       </div>
 
-      {/* DRAG GHOST IMAGE */}
       {isDragging && dragItem && (
           <div 
             className="fixed pointer-events-none bg-[#007acc] text-white px-3 py-2 rounded-lg shadow-2xl z-[9999] text-xs font-bold flex items-center gap-2"

@@ -31,9 +31,9 @@ const CodePreview = ({ code }: { code: string }) => {
                 EditorView.theme({
                     "&": { height: "100%", backgroundColor: "transparent" },
                     ".cm-gutters": { backgroundColor: "transparent", border: "none", color: "#666" },
-                    ".cm-scroller": { fontFamily: "'Fira Code', monospace", fontSize: "11px" },
+                    ".cm-scroller": { fontFamily: "'Fira Code', monospace", fontSize: "12px" }, // Aumentado de 11px para 12px
                     
-                    // --- SCROLLBAR CUSTOMIZADA (CSS INJETADO NO CODEMIRROR) ---
+                    // --- SCROLLBAR CUSTOMIZADA ---
                     ".cm-scroller::-webkit-scrollbar": {
                         width: "12px",
                         height: "12px"
@@ -42,13 +42,13 @@ const CodePreview = ({ code }: { code: string }) => {
                         backgroundColor: "transparent"
                     },
                     ".cm-scroller::-webkit-scrollbar-thumb": {
-                        backgroundColor: "#333", // Cor do thumb (Dark Gray)
+                        backgroundColor: "#333",
                         borderRadius: "6px",
-                        border: "3px solid transparent", // Cria o efeito de espaçamento (padding)
+                        border: "3px solid transparent",
                         backgroundClip: "content-box"
                     },
                     ".cm-scroller::-webkit-scrollbar-thumb:hover": {
-                        backgroundColor: "#555" // Hover state
+                        backgroundColor: "#555"
                     },
                     ".cm-scroller::-webkit-scrollbar-corner": {
                         backgroundColor: "transparent"
@@ -101,11 +101,11 @@ const QuickCreationForm = ({ category, folder }: { category: EntityType, folder:
     return (
         <div className="max-w-md mx-auto w-full p-8 flex flex-col justify-center h-full animate-in zoom-in-95 duration-300">
             <div className="text-center mb-8">
-                <div className="w-16 h-16 bg-emerald-500/10 text-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-emerald-500/20">
+                <div className="w-16 h-16 bg-emerald-500/10 text-emerald-500 rounded-xl flex items-center justify-center mx-auto mb-4 border border-emerald-500/20">
                     <Zap className="w-8 h-8" />
                 </div>
-                <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Quick Create</h2>
-                <p className="text-xs text-slate-500 mt-2">Create a <strong>Clean Class</strong> without framework inheritance.</p>
+                <h2 className="text-2xl font-righteous text-slate-900 dark:text-white uppercase tracking-wide">Quick Create</h2>
+                <p className="text-sm text-slate-500 mt-2">Create a <strong>Clean Class</strong> without framework inheritance.</p>
             </div>
 
             <div className="space-y-4">
@@ -116,15 +116,15 @@ const QuickCreationForm = ({ category, folder }: { category: EntityType, folder:
                         onChange={e => setInternalName(e.target.value.replace(/\s+/g, ''))}
                         onKeyDown={(e) => e.key === 'Enter' && handleQuickCreate()}
                         placeholder="Filename"
-                        className="w-full bg-white dark:bg-[#252526] border-2 border-slate-200 dark:border-[#333] rounded-xl px-5 py-4 font-bold text-lg text-slate-900 dark:text-white focus:border-emerald-500 outline-none shadow-sm transition-all text-center"
+                        className="w-full bg-white dark:bg-[#252526] border-2 border-slate-200 dark:border-[#333] rounded-lg px-5 py-4 font-bold text-lg text-slate-900 dark:text-white focus:border-emerald-500 outline-none shadow-sm transition-all text-center"
                     />
-                    <div className="absolute right-4 top-5 text-xs font-mono text-slate-400">.js</div>
+                    <div className="absolute right-4 top-5 text-sm font-mono text-slate-400">.js</div>
                 </div>
 
                 <button 
                     onClick={handleQuickCreate}
                     disabled={!internalName}
-                    className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-black text-sm uppercase tracking-widest shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
+                    className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-bold text-sm uppercase tracking-widest shadow-md active:scale-95 transition-all flex items-center justify-center gap-2"
                 >
                     <FilePlus className="w-4 h-4" />
                     Create Empty File
@@ -190,40 +190,40 @@ const CreationForm = ({ templateId, category, folder }: { templateId: string, ca
             <div className="max-w-6xl mx-auto w-full p-6 animate-in fade-in slide-in-from-bottom-4 duration-300 flex flex-col lg:flex-row gap-8 h-full">
                 <div className="flex-1 flex flex-col h-full overflow-y-auto custom-scrollbar">
                     <div className="mb-6 flex items-center gap-4 border-b border-slate-200 dark:border-[#333] pb-6 shrink-0">
-                        <div className="p-3 bg-slate-100 dark:bg-[#252526] rounded-xl text-slate-500 dark:text-slate-400">
+                        <div className="p-3 bg-slate-100 dark:bg-[#252526] rounded-lg text-slate-500 dark:text-slate-400">
                             {templateData.icon}
                         </div>
                         <div>
-                            <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">{templateData.label}</h2>
-                            <p className="text-xs text-slate-500 font-medium">{templateData.description}</p>
+                            <h2 className="text-xl font-righteous text-slate-900 dark:text-white uppercase tracking-wide">{templateData.label}</h2>
+                            <p className="text-sm text-slate-500 font-medium">{templateData.description}</p>
                         </div>
                     </div>
 
                     <div className="space-y-6">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Class Name (ID)</label>
+                            <label className="text-xs font-righteous uppercase tracking-widest text-slate-500 ml-1">Class Name (ID)</label>
                             <div className="relative group">
                                 <input 
                                     autoFocus
                                     value={internalName}
                                     onChange={e => setInternalName(e.target.value.replace(/\s+/g, ''))}
                                     placeholder={`My${templateData.label.split(' ')[0].replace(/[^a-zA-Z]/g, '')}`}
-                                    className="w-full bg-slate-50 dark:bg-[#252526] border border-slate-200 dark:border-[#333] rounded-xl px-5 py-4 font-bold text-lg text-slate-900 dark:text-white focus:border-[#007acc] outline-none shadow-sm transition-all group-hover:shadow-md"
+                                    className="w-full bg-slate-50 dark:bg-[#252526] border border-slate-200 dark:border-[#333] rounded-lg px-5 py-4 font-bold text-lg text-slate-900 dark:text-white focus:border-[#007acc] outline-none shadow-sm transition-all group-hover:shadow-md"
                                 />
-                                <div className="absolute right-4 top-5 text-xs font-mono text-slate-400">.js</div>
+                                <div className="absolute right-4 top-5 text-sm font-mono text-slate-400">.js</div>
                             </div>
                         </div>
 
                         {templateData.requiresTexture && (
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Texture Asset</label>
-                                <label className="flex items-center gap-5 p-4 border border-dashed border-slate-300 dark:border-[#444] rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-[#2a2d2e] hover:border-[#007acc] transition-all group bg-white dark:bg-[#252526]">
-                                    <div className="w-16 h-16 bg-slate-100 dark:bg-[#333] rounded-xl flex items-center justify-center overflow-hidden border border-slate-200 dark:border-[#444] group-hover:border-[#007acc]">
+                                <label className="text-xs font-righteous uppercase tracking-widest text-slate-500 ml-1">Texture Asset</label>
+                                <label className="flex items-center gap-5 p-4 border border-dashed border-slate-300 dark:border-[#444] rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-[#2a2d2e] hover:border-[#007acc] transition-all group bg-white dark:bg-[#252526]">
+                                    <div className="w-16 h-16 bg-slate-100 dark:bg-[#333] rounded-lg flex items-center justify-center overflow-hidden border border-slate-200 dark:border-[#444] group-hover:border-[#007acc]">
                                         {textureData ? <img src={textureData} className="w-full h-full object-contain pixelated" /> : <Upload className="w-6 h-6 text-slate-300 group-hover:text-[#007acc]" />}
                                     </div>
                                     <div className="flex-1">
                                         <span className="text-sm font-bold text-slate-700 dark:text-slate-300 block group-hover:text-[#007acc]">{textureData ? 'Change Texture' : 'Upload PNG'}</span>
-                                        <span className="text-[10px] text-slate-400">Max 32x32 recommended</span>
+                                        <span className="text-[11px] text-slate-400">Max 32x32 recommended</span>
                                     </div>
                                     <input type="file" accept="image/png" className="hidden" onChange={handleUpload} />
                                 </label>
@@ -233,7 +233,7 @@ const CreationForm = ({ templateId, category, folder }: { templateId: string, ca
                         <div className="flex gap-3 mt-4">
                             <button 
                                 onClick={() => setShowMobilePreview(true)}
-                                className="lg:hidden flex-1 py-4 bg-slate-100 dark:bg-[#252526] text-slate-600 dark:text-slate-300 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-[#333] transition-colors flex items-center justify-center gap-2"
+                                className="lg:hidden flex-1 py-4 bg-slate-100 dark:bg-[#252526] text-slate-600 dark:text-slate-300 rounded-lg font-bold text-xs uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-[#333] transition-colors flex items-center justify-center gap-2"
                             >
                                 <Eye className="w-4 h-4" /> Preview Code
                             </button>
@@ -241,7 +241,7 @@ const CreationForm = ({ templateId, category, folder }: { templateId: string, ca
                             <button 
                                 onClick={handleCreate}
                                 disabled={!internalName}
-                                className="flex-[2] py-4 bg-[#007acc] hover:bg-[#0062a3] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg active:scale-95 transition-all flex items-center justify-center gap-3"
+                                className="flex-[2] py-4 bg-[#007acc] hover:bg-[#0062a3] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-bold text-sm uppercase tracking-widest shadow-md active:scale-95 transition-all flex items-center justify-center gap-3"
                             >
                                 <Wand2 className="w-4 h-4" />
                                 Generate Script
@@ -254,9 +254,9 @@ const CreationForm = ({ templateId, category, folder }: { templateId: string, ca
                     <div className="px-4 py-3 bg-[#252526] border-b border-[#333] flex items-center justify-between">
                         <div className="flex items-center gap-2 text-slate-400">
                             <FileCode className="w-4 h-4" />
-                            <span className="text-[10px] font-black uppercase tracking-widest">Live Code Preview</span>
+                            <span className="text-xs font-righteous uppercase tracking-widest">Live Code Preview</span>
                         </div>
-                        <button onClick={handleCopyCode} className="text-[10px] font-bold text-slate-500 hover:text-white transition-colors uppercase flex items-center gap-1">
+                        <button onClick={handleCopyCode} className="text-[11px] font-bold text-slate-500 hover:text-white transition-colors uppercase flex items-center gap-1">
                             {copied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />} 
                             {copied ? 'Copied' : 'Copy'}
                         </button>
@@ -269,13 +269,13 @@ const CreationForm = ({ templateId, category, folder }: { templateId: string, ca
 
             {showMobilePreview && (
                 <div className="fixed inset-0 z-[1000] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in zoom-in-95 duration-200">
-                    <div className="bg-[#1e1e1e] w-full h-[80vh] rounded-2xl border border-[#333] flex flex-col shadow-2xl overflow-hidden">
+                    <div className="bg-[#1e1e1e] w-full h-[80vh] rounded-xl border border-[#333] flex flex-col shadow-xl overflow-hidden">
                         <div className="p-4 border-b border-[#333] flex items-center justify-between bg-[#252526]">
                             <div className="flex items-center gap-2">
                                 <FileCode className="w-4 h-4 text-[#007acc]" />
-                                <span className="text-xs font-black text-white uppercase tracking-widest">Generated Preview</span>
+                                <span className="text-sm font-righteous text-white uppercase tracking-widest">Generated Preview</span>
                             </div>
-                            <button onClick={() => setShowMobilePreview(false)} className="p-2 bg-[#333] rounded-full text-slate-400 hover:text-white">
+                            <button onClick={() => setShowMobilePreview(false)} className="p-2 bg-[#333] rounded-lg text-slate-400 hover:text-white">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
@@ -285,7 +285,7 @@ const CreationForm = ({ templateId, category, folder }: { templateId: string, ca
                         <div className="p-4 border-t border-[#333] bg-[#252526]">
                             <button 
                                 onClick={() => setShowMobilePreview(false)}
-                                className="w-full py-3 bg-[#007acc] text-white rounded-lg font-bold text-xs uppercase"
+                                className="w-full py-3 bg-[#007acc] text-white rounded-lg font-bold text-sm uppercase"
                             >
                                 Close Preview
                             </button>
@@ -340,7 +340,7 @@ const CreationModal: React.FC = () => {
 
     return (
         <div className="fixed inset-0 z-[999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-0 md:p-8 animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-[#1e1e1e] w-full h-full md:rounded-2xl md:h-[90vh] md:max-w-7xl shadow-2xl flex overflow-hidden border border-slate-200 dark:border-[#333]">
+            <div className="bg-white dark:bg-[#1e1e1e] w-full h-full md:rounded-xl md:h-[90vh] md:max-w-7xl shadow-2xl flex overflow-hidden border border-slate-200 dark:border-[#333]">
                 
                 {/* SIDEBAR */}
                 <div className={`
@@ -349,24 +349,24 @@ const CreationModal: React.FC = () => {
                 `}>
                     <div className="p-5 border-b border-slate-200 dark:border-[#333] flex justify-between items-center shrink-0">
                         <div>
-                            <h2 className="text-sm font-black uppercase tracking-widest text-slate-700 dark:text-white">New File</h2>
-                            <p className="text-[10px] text-slate-400">Target: /{creationModal.targetFolder || 'Root'}</p>
+                            <h2 className="text-sm font-righteous uppercase tracking-wide text-slate-700 dark:text-white">New File</h2>
+                            <p className="text-[11px] text-slate-400">Target: /{creationModal.targetFolder || 'Root'}</p>
                         </div>
-                        <button onClick={handleReset} className="md:hidden p-2 bg-slate-200 dark:bg-[#333] rounded-full"><X className="w-5 h-5" /></button>
+                        <button onClick={handleReset} className="md:hidden p-2 bg-slate-200 dark:bg-[#333] rounded-lg"><X className="w-5 h-5" /></button>
                     </div>
 
                     <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-1">
                         {/* BOTÃO MÁGICO DE CRIAÇÃO RÁPIDA */}
                         <button 
                             onClick={handleActivateQuickMode}
-                            className={`w-full flex items-center gap-3 px-4 py-3 mb-4 rounded-xl transition-all text-left border ${isQuickMode ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'bg-white dark:bg-[#2d2d2d] border-slate-200 dark:border-[#333] text-slate-600 dark:text-slate-300 hover:border-emerald-500/50 hover:text-emerald-500'}`}
+                            className={`w-full flex items-center gap-3 px-4 py-3 mb-4 rounded-lg transition-all text-left border ${isQuickMode ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'bg-white dark:bg-[#2d2d2d] border-slate-200 dark:border-[#333] text-slate-600 dark:text-slate-300 hover:border-emerald-500/50 hover:text-emerald-500'}`}
                         >
                             <div className={`p-1.5 rounded-lg ${isQuickMode ? 'bg-emerald-500 text-white' : 'bg-slate-100 dark:bg-[#333]'}`}>
                                 <Zap className="w-4 h-4" />
                             </div>
                             <div className="flex-1">
-                                <span className="text-xs font-black uppercase tracking-tight block">Empty File</span>
-                                <span className="text-[9px] opacity-70 font-medium">Quick create (No template)</span>
+                                <span className="text-xs font-bold uppercase tracking-tight block">Empty File</span>
+                                <span className="text-[10px] opacity-70 font-medium">Quick create (No template)</span>
                             </div>
                             {isQuickMode && <ChevronRight className="w-3.5 h-3.5" />}
                         </button>
@@ -387,7 +387,7 @@ const CreationModal: React.FC = () => {
                                         className={`w-full flex items-center gap-3 px-4 py-3 transition-all text-left ${isCatActive ? 'bg-white dark:bg-[#333] text-[#007acc] shadow-sm font-bold' : 'text-slate-500 hover:bg-slate-200 dark:hover:bg-[#2d2d2d]'}`}
                                     >
                                         {cat.icon}
-                                        <span className="text-[11px] uppercase tracking-tight flex-1">{cat.label}</span>
+                                        <span className="text-xs uppercase tracking-tight flex-1">{cat.label}</span>
                                         {isCatActive ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5 opacity-50" />}
                                     </button>
 
@@ -397,12 +397,12 @@ const CreationModal: React.FC = () => {
                                                 <button
                                                     key={t.id}
                                                     onClick={() => handleSelectTemplate(cat.id, t.id)}
-                                                    className={`w-full text-left px-4 py-2 text-[11px] transition-colors rounded-r-md ${selectedTemplateId === t.id ? 'bg-[#007acc] text-white font-bold' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}
+                                                    className={`w-full text-left px-4 py-2.5 text-xs transition-colors rounded-r-md ${selectedTemplateId === t.id ? 'bg-[#007acc] text-white font-bold' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}
                                                 >
                                                     {t.label}
                                                 </button>
                                             ))}
-                                            {catTemplates.length === 0 && <div className="px-4 py-2 text-[10px] text-slate-400 italic">No templates</div>}
+                                            {catTemplates.length === 0 && <div className="px-4 py-2 text-[11px] text-slate-400 italic">No templates</div>}
                                         </div>
                                     )}
                                 </div>
@@ -418,14 +418,14 @@ const CreationModal: React.FC = () => {
                 `}>
                     <div className="h-16 border-b border-slate-100 dark:border-[#333] flex items-center justify-between px-6 shrink-0 bg-white dark:bg-[#1e1e1e]">
                         <div className="flex items-center gap-3">
-                            <button onClick={() => setMobileView('list')} className="md:hidden p-2 bg-slate-100 dark:bg-[#333] rounded-full">
+                            <button onClick={() => setMobileView('list')} className="md:hidden p-2 bg-slate-100 dark:bg-[#333] rounded-lg">
                                 <ChevronLeft className="w-5 h-5" />
                             </button>
-                            <span className="text-xs font-black uppercase tracking-widest text-slate-400 hidden md:block">
+                            <span className="text-sm font-righteous uppercase tracking-widest text-slate-400 hidden md:block">
                                 {isQuickMode ? 'Quick Creation Mode' : 'Configuration & Preview'}
                             </span>
                         </div>
-                        <button onClick={handleReset} className="hidden md:flex p-2 hover:bg-slate-100 dark:hover:bg-[#333] rounded-full transition-colors">
+                        <button onClick={handleReset} className="hidden md:flex p-2 hover:bg-slate-100 dark:hover:bg-[#333] rounded-lg transition-colors">
                             <X className="w-6 h-6 text-slate-400" />
                         </button>
                     </div>
@@ -438,8 +438,8 @@ const CreationModal: React.FC = () => {
                         ) : (
                             <div className="text-center p-10 opacity-40 select-none">
                                 <LayoutGrid className="w-20 h-20 mx-auto mb-6 text-slate-300 dark:text-slate-600" />
-                                <h3 className="text-sm font-black uppercase tracking-widest text-slate-400">Select a Template</h3>
-                                <p className="text-[10px] text-slate-400 mt-2">Choose a category or use "Empty File" for a blank script.</p>
+                                <h3 className="text-sm font-righteous uppercase tracking-widest text-slate-400">Select a Template</h3>
+                                <p className="text-xs text-slate-400 mt-2">Choose a category or use "Empty File" for a blank script.</p>
                             </div>
                         )}
                     </div>

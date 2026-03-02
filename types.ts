@@ -79,11 +79,13 @@ export interface Workspace {
   version: number;
   authors: Author[];
   entities: ModEntity[];
+  localization: Record<string, string>
   emptyFolders: Record<EntityType, string[]>;
   lastModified: number;
   settingsGuid: string;
   manifestId: string;
   mainJsInjection?: string;
+  enabledHooks?: Record<string, Record<string, boolean>>; 
 }
 
 export interface EditorState {
@@ -92,7 +94,7 @@ export interface EditorState {
   activeEntityId: string | null;
   // Lista de arquivos abertos (Abas)
   openFiles: string[]; 
-  viewMode: 'entities' | 'files' | 'textures';
+  viewMode: 'entities' | 'files' | 'textures' | 'hooks' | 'localization';
   focusMode: boolean; 
   isFullscreen: boolean;
   isSidebarOpen: boolean;

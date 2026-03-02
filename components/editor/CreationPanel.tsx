@@ -12,8 +12,8 @@ interface Props {
 
 const CreationPanel: React.FC<Props> = ({ isMobile = false, onClose }) => {
   const { 
-    creationModal, // <--- NOME CORRETO DO STORE
-    closeCreationModal, // <--- NOME CORRETO
+    creationModal, 
+    closeCreationModal, 
     addEntity, 
     activeWorkspaceId, 
     setSidebarOpen,
@@ -40,7 +40,7 @@ const CreationPanel: React.FC<Props> = ({ isMobile = false, onClose }) => {
     if (!activeWorkspaceId || !selectedTemplate || !activeCategory) return;
 
     addEntity(activeWorkspaceId, {
-      type: activeCategory, // Garante que a categoria está sendo passada!
+      type: activeCategory, 
       category: activeCategory,
       internalName: internalName,
       folder: activeFolder,
@@ -81,13 +81,13 @@ const CreationPanel: React.FC<Props> = ({ isMobile = false, onClose }) => {
           key={t.id}
           onClick={() => setSelectedTemplate(t.id)}
           className={`
-            text-left p-3 rounded-xl border transition-all flex items-center gap-3 relative overflow-hidden
+            text-left p-3 rounded-lg border transition-all flex items-center gap-3 relative overflow-hidden shadow-sm hover:shadow-md
             ${selectedTemplate === t.id 
               ? 'bg-[#007acc]/10 border-[#007acc] ring-1 ring-[#007acc]' 
               : 'border-slate-200 dark:border-[#333] hover:border-slate-300 dark:hover:border-[#555] bg-white dark:bg-[#252526]'}
           `}
         >
-          <div className={`p-2.5 rounded-lg shrink-0 ${selectedTemplate === t.id ? 'bg-[#007acc] text-white' : 'bg-slate-100 dark:bg-[#1e1e1e] text-slate-500'}`}>
+          <div className={`p-2.5 rounded-md shrink-0 ${selectedTemplate === t.id ? 'bg-[#007acc] text-white' : 'bg-slate-100 dark:bg-[#1e1e1e] text-slate-500'}`}>
             {t.icon}
           </div>
           <div className="flex-1 min-w-0">
@@ -99,7 +99,7 @@ const CreationPanel: React.FC<Props> = ({ isMobile = false, onClose }) => {
           
           <div 
             onClick={(e) => { e.stopPropagation(); setSelectedTemplate(t.id); setShowCodePreview(true); }}
-            className="p-2 text-slate-400 hover:text-[#007acc] hover:bg-slate-100 dark:hover:bg-[#333] rounded-full transition-colors"
+            className="p-2 text-slate-400 hover:text-[#007acc] hover:bg-slate-100 dark:hover:bg-[#333] rounded-md transition-colors"
           >
             <Eye className="w-4 h-4" />
           </div>
@@ -114,24 +114,24 @@ const CreationPanel: React.FC<Props> = ({ isMobile = false, onClose }) => {
     return (
       <div className={`space-y-6 animate-in slide-in-from-bottom-4 fade-in duration-300 ${isMobile ? 'mt-4' : ''}`}>
         <div className="space-y-3">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Class Name</label>
+            <label className="text-[10px] font-righteous text-slate-500 uppercase tracking-widest ml-1">Class Name</label>
             <div className="relative">
                 <input 
                     autoFocus
                     value={internalName}
                     onChange={(e) => setInternalName(e.target.value.replace(/\s+/g, ''))}
                     placeholder={`e.g. My${currentTemplateData.label.split(' ')[0]}`}
-                    className="w-full bg-slate-50 dark:bg-[#1e1e1e] border border-slate-200 dark:border-[#333] rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-[#007acc] transition-all"
+                    className="w-full bg-slate-50 dark:bg-[#1e1e1e] border border-slate-200 dark:border-[#333] rounded-lg px-4 py-3 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-[#007acc] transition-all"
                 />
-                <div className="absolute right-3 top-3 px-2 py-0.5 bg-slate-200 dark:bg-[#333] rounded text-[9px] font-mono text-slate-500">.js</div>
+                <div className="absolute right-3 top-3 px-2 py-0.5 bg-slate-200 dark:bg-[#333] rounded-md text-[9px] font-mono text-slate-500">.js</div>
             </div>
         </div>
 
         {currentTemplateData.requiresTexture && (
             <div className="space-y-3">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Texture Asset</label>
-                <label className="flex items-center gap-4 p-3 bg-slate-50 dark:bg-[#1e1e1e] border border-dashed border-slate-300 dark:border-[#444] rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-[#252526] transition-colors group">
-                    <div className="w-12 h-12 bg-white dark:bg-[#252526] rounded-lg border border-slate-200 dark:border-[#333] flex items-center justify-center overflow-hidden">
+                <label className="text-[10px] font-righteous text-slate-500 uppercase tracking-widest ml-1">Texture Asset</label>
+                <label className="flex items-center gap-4 p-3 bg-slate-50 dark:bg-[#1e1e1e] border border-dashed border-slate-300 dark:border-[#444] rounded-lg cursor-pointer hover:bg-slate-100 dark:hover:bg-[#252526] transition-colors group">
+                    <div className="w-12 h-12 bg-white dark:bg-[#252526] rounded-md border border-slate-200 dark:border-[#333] flex items-center justify-center overflow-hidden">
                         {textureData ? (
                             <img src={textureData} className="w-full h-full object-contain pixelated" />
                         ) : (
@@ -152,7 +152,7 @@ const CreationPanel: React.FC<Props> = ({ isMobile = false, onClose }) => {
         <button 
             onClick={handleCreate}
             disabled={!internalName}
-            className="w-full py-3 bg-[#007acc] hover:bg-[#0062a3] disabled:bg-slate-300 dark:disabled:bg-[#333] disabled:text-slate-400 text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
+            className="w-full py-3 bg-[#007acc] hover:bg-[#0062a3] disabled:bg-slate-300 dark:disabled:bg-[#333] disabled:text-slate-400 text-white rounded-lg text-xs font-bold uppercase tracking-widest shadow-md active:scale-95 transition-all flex items-center justify-center gap-2"
         >
             <Wand2 className="w-4 h-4" />
             Create Script
@@ -169,7 +169,7 @@ const CreationPanel: React.FC<Props> = ({ isMobile = false, onClose }) => {
                       <FileCode className="w-4 h-4 text-[#007acc]" />
                       <span className="text-xs font-bold dark:text-white">Code Preview: {currentTemplateData.label}</span>
                   </div>
-                  <button onClick={() => setShowCodePreview(false)} className="text-xs text-slate-500 font-bold hover:text-slate-900 dark:hover:text-white">CLOSE</button>
+                  <button onClick={() => setShowCodePreview(false)} className="text-xs text-slate-500 font-bold hover:text-slate-900 dark:hover:text-white transition-colors">CLOSE</button>
               </div>
               <div className="flex-1 p-4 overflow-auto bg-slate-50 dark:bg-[#1e1e1e] font-mono text-[10px] text-slate-600 dark:text-slate-300 whitespace-pre">
                   {currentTemplateData.getCode(internalName || 'MyItem')}
@@ -182,11 +182,11 @@ const CreationPanel: React.FC<Props> = ({ isMobile = false, onClose }) => {
     <div className={`flex flex-col h-full ${isMobile ? 'px-1' : 'max-w-4xl mx-auto p-8 w-full'}`}>
       {!isMobile && (
          <div className="mb-8 flex items-center gap-4">
-             <div className="p-3 bg-[#007acc] rounded-xl shadow-lg shadow-blue-500/20">
+             <div className="p-3 bg-[#007acc] rounded-lg shadow-md shadow-blue-500/20">
                  <Terminal className="w-6 h-6 text-white" />
              </div>
              <div>
-                 <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight uppercase">New {activeCategory}</h2>
+                 <h2 className="text-2xl font-righteous text-slate-900 dark:text-white tracking-wide uppercase">New {activeCategory}</h2>
                  <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest mt-0.5">
                     Location: {activeFolder || 'Root'}
                  </p>
@@ -198,7 +198,7 @@ const CreationPanel: React.FC<Props> = ({ isMobile = false, onClose }) => {
           renderForm()
       ) : (
           <>
-            {isMobile && <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Select Template</h3>}
+            {isMobile && <h3 className="text-[10px] font-righteous text-slate-400 uppercase tracking-widest mb-4">Select Template</h3>}
             {renderTemplateList()}
             {isMobile && selectedTemplate && (
                 <>

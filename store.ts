@@ -5,34 +5,24 @@ import { persist, createJSONStorage, StateStorage } from 'zustand/middleware';
 import { get, set, del } from 'idb-keyval';
 import { toast } from 'sonner';
 
+// Storage config...
 const storage: StateStorage = {
-  getItem: async (name: string): Promise<string | null> => {
-    const value = await get(name);
-    return value || null;
-  },
-  setItem: async (name: string, value: string): Promise<void> => {
-    await set(name, value);
-  },
-  removeItem: async (name: string): Promise<void> => {
-    await del(name);
-  },
+  getItem: async (name: string): Promise<string | null> => { const value = await get(name); return value || null; },
+  setItem: async (name: string, value: string): Promise<void> => { await set(name, value); },
+  removeItem: async (name: string): Promise<void> => { await del(name); },
 };
 
+// Interface... (Mantida)
 interface EditorStore extends EditorState {
   _hasHydrated: boolean;
   setHasHydrated: (state: boolean) => void;
   importWorkspace: (ws: Workspace) => void;
-  
   updateWorkspace: (id: string, data: Partial<Workspace>) => void;
-  addWorkspace: (ws: Partial<Workspace>) => void;
+  addWorkspace: (ws: Partial<Workspace>, includeDefaults?: boolean) => void;
   setActiveWorkspace: (id: string | null) => void;
-  
-  // --- Tab Management ---
   setActiveEntity: (id: string | null) => void;
   closeFile: (id: string) => void;
   closeAllFiles: () => void;
-  // ---------------------
-
   addEntity: (workspaceId: string, entity: Partial<ModEntity>) => void;
   updateEntity: (workspaceId: string, entity: ModEntity) => void;
   updateEntityCode: (workspaceId: string, entityId: string, code: string) => void;
@@ -41,29 +31,22 @@ interface EditorStore extends EditorState {
   moveEntity: (workspaceId: string, entityId: string, targetFolder: string) => void;
   addFolder: (workspaceId: string, type: EntityType, path: string) => void;
   updateMainJs: (workspaceId: string, code: string) => void;
-  
   deleteEntity: (workspaceId: string, entityId: string) => void;
   deleteFolder: (workspaceId: string, type: EntityType, path: string) => void;
-
   modalAddTexture: { isOpen: boolean };
   openAddTextureModal: () => void;
   closeAddTextureModal: () => void;
-
   deleteConfirmation: { isOpen: boolean; type: 'entity' | 'folder'; id: string; category?: EntityType; name: string; position?: { x: number; y: number }; };
   openDeleteConfirmation: (data: Omit<EditorStore['deleteConfirmation'], 'isOpen'>) => void;
   closeDeleteConfirmation: () => void;
-
   renameModal: { isOpen: boolean; type: 'entity' | 'folder'; id: string; currentName: string; category?: EntityType; position?: { x: number; y: number }; };
   openRenameModal: (data: Omit<EditorStore['renameModal'], 'isOpen'>) => void;
   closeRenameModal: () => void;
-
   deleteWorkspace: (id: string) => void;
-
   moveModal: { isOpen: boolean; entityId: string | null; currentFolder: string };
   openMoveModal: (entityId: string, currentFolder: string) => void;
   closeMoveModal: () => void;
-
-  setViewMode: (mode: 'entities' | 'files' | 'textures') => void;
+  setViewMode: (mode: 'entities' | 'files' | 'textures' | 'hooks') => void; 
   setFocusMode: (val: boolean) => void;
   setFullscreen: (val: boolean) => void;
   setSidebarOpen: (val: boolean) => void;
@@ -73,23 +56,20 @@ interface EditorStore extends EditorState {
   setPropertiesOpen: (val: boolean) => void;
   toggleFolder: (key: string) => void;
   expandToPath: (category: EntityType, path: string) => void;
-  
   openCreationModal: (initialCategory?: EntityType, folder?: string) => void;
   closeCreationModal: () => void;
   resetCreationState: () => void;
-  
   modalCreateFolder: { isOpen: false, category: null, parentPath: '' };
   openCreateFolderModal: (category: EntityType, parentPath?: string) => void;
   closeCreateFolderModal: () => void;
-
   creationModal: { isOpen: boolean; activeCategory: EntityType; targetFolder: string; };
 }
 
 const DEFAULT_FOLDERS: Record<EntityType, string[]> = {
-  [EntityType.ITEM]: ['Weapons', 'Tools', 'Accessories','Ammo', 'Armor', 'Quests', 'Consumables'],
-  [EntityType.NPC]: [],
-  [EntityType.PROJECTILE]: [],
-  [EntityType.BUFF]: [],
+  [EntityType.ITEM]: ['Weapons/Melee', 'Weapons/Ranged', 'Weapons/Magic', 'Weapons/Summon', 'Tools', 'Accessories', 'Ammo', 'Armor', 'Consumables'],
+  [EntityType.NPC]: ['Bosses', 'TownNPCs', 'Enemies'],
+  [EntityType.PROJECTILE]: ['Minions', 'Boss', 'Friendly'],
+  [EntityType.BUFF]: ['Debuffs', 'Potions'],
   [EntityType.BIOME]: [], [EntityType.BACKGROUND]: [], [EntityType.CLOUD]: [], 
   [EntityType.GLOBAL]: [], [EntityType.MENU]: [], [EntityType.PET]: [], 
   [EntityType.SUBWORLD]: [], [EntityType.TILE]: [], [EntityType.SYSTEM]: [], [EntityType.BLANK]: []
@@ -103,8 +83,6 @@ const checkDuplicateEntity = (workspace: Workspace, category: EntityType, folder
         e.id !== excludeId
     ) ?? false;
 };
-
-const generateBoilerplate = (entity: Partial<ModEntity>) => ""; 
 
 export const useEditorStore = create<EditorStore>()(
   persist(
@@ -145,37 +123,24 @@ export const useEditorStore = create<EditorStore>()(
         workspaces: state.workspaces.filter((w) => w.id !== id)
       })),
 
-      // --- ABAS ---
       setActiveEntity: (id) => set(state => {
           if (!id) return { activeEntityId: null };
-          
-          // Garante que não adiciona duplicados
-          const newOpenFiles = state.openFiles.includes(id) 
-            ? state.openFiles 
-            : [...state.openFiles, id];
-            
+          const newOpenFiles = state.openFiles.includes(id) ? state.openFiles : [...state.openFiles, id];
           return { activeEntityId: id, openFiles: newOpenFiles };
       }),
 
       closeFile: (id) => set(state => {
           const newOpenFiles = state.openFiles.filter(fid => fid !== id);
-          
           let newActiveId = state.activeEntityId;
           if (state.activeEntityId === id) {
               const index = state.openFiles.indexOf(id);
-              if (newOpenFiles.length > 0) {
-                  // Tenta selecionar o anterior, senão o próximo
-                  newActiveId = newOpenFiles[Math.max(0, index - 1)];
-              } else {
-                  newActiveId = null;
-              }
+              if (newOpenFiles.length > 0) newActiveId = newOpenFiles[Math.max(0, index - 1)];
+              else newActiveId = null;
           }
-          
           return { openFiles: newOpenFiles, activeEntityId: newActiveId };
       }),
 
       closeAllFiles: () => set({ openFiles: [], activeEntityId: null }),
-      // ----------
 
       openMoveModal: (entityId, currentFolder) => set({ moveModal: { isOpen: true, entityId, currentFolder } }),
       closeMoveModal: () => set(state => ({ moveModal: { ...state.moveModal, isOpen: false } })),
@@ -185,9 +150,7 @@ export const useEditorStore = create<EditorStore>()(
       closeDeleteConfirmation: () => set(state => ({ deleteConfirmation: { ...state.deleteConfirmation, isOpen: false } })),
 
       deleteEntity: (workspaceId, entityId) => set(state => ({
-        workspaces: state.workspaces.map(ws => ws.id === workspaceId ? {
-          ...ws, entities: ws.entities.filter(e => e.id !== entityId)
-        } : ws),
+        workspaces: state.workspaces.map(ws => ws.id === workspaceId ? { ...ws, entities: ws.entities.filter(e => e.id !== entityId) } : ws),
         openFiles: state.openFiles.filter(id => id !== entityId),
         activeEntityId: state.activeEntityId === entityId ? null : state.activeEntityId
       })),
@@ -209,23 +172,21 @@ export const useEditorStore = create<EditorStore>()(
       })),
 
       addEntity: (workspaceId, entity) => set((state) => {
-    const ws = state.workspaces.find(w => w.id === workspaceId);
-    if (!ws) return {};
-
-    // FALLBACK DE SEGURANÇA: Se não vier category, usa o type. Se não vier folder, usa vazio.
-    const finalCategory = entity.category || entity.type; 
-    const finalFolder = entity.folder || '';
-
-    // Verifica duplicatas com os dados sanitizados
-    if (checkDuplicateEntity(ws, finalCategory!, finalFolder, entity.internalName!)) {
-        toast.error(`File '${entity.internalName}' already exists.`);
-        return {};
-    }
-
+        const ws = state.workspaces.find(w => w.id === workspaceId);
+        if (!ws) return {};
+        
+        const finalCategory = entity.category || entity.type; 
+        const finalFolder = entity.folder || '';
+        
+        if (checkDuplicateEntity(ws, finalCategory!, finalFolder, entity.internalName!)) {
+            toast.error(`File '${entity.internalName}' already exists.`);
+            return {};
+        }
+        
         const newEntity: ModEntity = { 
           id: uuidv4(), 
           type: entity.type!, 
-          category: finalCategory!, // <--- AGORA USA O VALOR GARANTIDO
+          category: finalCategory!, 
           template: entity.template, 
           internalName: entity.internalName!, 
           displayName: entity.internalName!, 
@@ -234,14 +195,17 @@ export const useEditorStore = create<EditorStore>()(
           folder: finalFolder, 
           properties: {}, 
           hooks: {}, 
-          code: entity.code || '' 
+          code: entity.code || '',
+          texturePath: entity.texturePath,
+          textureName: (entity as any).textureName
         };
-          
+        
         return { 
-            workspaces: state.workspaces.map(w => w.id === workspaceId ? { 
-                ...w, 
-                entities: [...(w.entities || []), newEntity] 
-            } : w) 
+            workspaces: state.workspaces.map(w => 
+                w.id === workspaceId 
+                ? { ...w, entities: [...(w.entities || []), newEntity] } 
+                : w
+            ) 
         };
       }),
 
@@ -254,7 +218,6 @@ export const useEditorStore = create<EditorStore>()(
       expandToPath: (category, folderPath) => set((state) => {
           const newExpanded = { ...state.expandedFolders };
           newExpanded['content'] = true;
-          newExpanded[category] = true;
           if (folderPath) {
               const parts = folderPath.split('/');
               let currentPath = '';
@@ -268,19 +231,32 @@ export const useEditorStore = create<EditorStore>()(
       modalAddTexture: { isOpen: false },
       openAddTextureModal: () => set({ modalAddTexture: { isOpen: true } }),
       closeAddTextureModal: () => set({ modalAddTexture: { isOpen: false } }),
-      addWorkspace: (ws) => set((state) => {
+      
+      // --- LÓGICA DO TOGGLE CORRIGIDA E LOGADA ---
+      addWorkspace: (ws, includeDefaults = true) => set((state) => {
+          console.log('[Store] Adding Workspace. includeDefaults:', includeDefaults); // LOG AQUI
+
           const newId = uuidv4();
+
+          let emptyFoldersInit: Record<EntityType, string[]> = {
+              [EntityType.ITEM]: [], [EntityType.NPC]: [], [EntityType.PROJECTILE]: [],
+              [EntityType.BUFF]: [], [EntityType.BIOME]: [], [EntityType.BACKGROUND]: [],
+              [EntityType.CLOUD]: [], [EntityType.GLOBAL]: [], [EntityType.MENU]: [],
+              [EntityType.PET]: [], [EntityType.SUBWORLD]: [], [EntityType.TILE]: [],
+              [EntityType.SYSTEM]: [], [EntityType.BLANK]: []
+          };
+
+          if (includeDefaults) {
+              console.log('[Store] Populating default folders...');
+              emptyFoldersInit = JSON.parse(JSON.stringify(DEFAULT_FOLDERS));
+          } else {
+              console.log('[Store] Workspace created with EMPTY structure.');
+          }
 
           const newWorkspace: Workspace = {
               version: 1,
               entities: [],
-              emptyFolders: {
-                  [EntityType.ITEM]: [], [EntityType.NPC]: [], [EntityType.PROJECTILE]: [],
-                  [EntityType.BUFF]: [], [EntityType.BIOME]: [], [EntityType.BACKGROUND]: [],
-                  [EntityType.CLOUD]: [], [EntityType.GLOBAL]: [], [EntityType.MENU]: [],
-                  [EntityType.PET]: [], [EntityType.SUBWORLD]: [], [EntityType.TILE]: [],
-                  [EntityType.SYSTEM]: [], [EntityType.BLANK]: []
-              },
+              emptyFolders: emptyFoldersInit,
               manifestId: uuidv4(),
               settingsGuid: uuidv4(),
               lastModified: Date.now(),
@@ -288,6 +264,7 @@ export const useEditorStore = create<EditorStore>()(
               internalId: ws.name?.replace(/\s+/g, '') || 'MyMod',
               authors: [],
               name: 'New Mod',
+              localization: { 'en-US': {} },
               ...ws,
               id: newId, 
           };
@@ -297,6 +274,7 @@ export const useEditorStore = create<EditorStore>()(
               activeWorkspaceId: newId 
           };
       }),
+      
       setActiveWorkspace: (id) => set({ activeWorkspaceId: id, activeEntityId: null, viewMode: 'entities', openFiles: [] }),
       setViewMode: (mode) => set({ viewMode: mode }),
       setFocusMode: (val) => set({ focusMode: val }),
@@ -318,11 +296,7 @@ export const useEditorStore = create<EditorStore>()(
             toast.error(`Cannot move: '${entity.internalName}' already exists in destination.`);
             return {};
         }
-        return {
-            workspaces: state.workspaces.map(ws => ws.id === workspaceId ? {
-            ...ws, entities: ws.entities.map(e => e.id === entityId ? { ...e, folder: targetFolder } : e)
-            } : ws)
-        };
+        return { workspaces: state.workspaces.map(ws => ws.id === workspaceId ? { ...ws, entities: ws.entities.map(e => e.id === entityId ? { ...e, folder: targetFolder } : e) } : ws) };
       }),
       renameFolder: (workspaceId, type, oldPath, newName) => set((state) => ({ workspaces: state.workspaces })),
     }),
@@ -336,7 +310,7 @@ export const useEditorStore = create<EditorStore>()(
         userProfile: state.userProfile, 
         theme: state.theme, 
         openFiles: state.openFiles,
-        expandedFolders: state.expandedFolders // <--- AQUI ESTAVA FALTANDO
+        expandedFolders: state.expandedFolders
       }),
     }
   )

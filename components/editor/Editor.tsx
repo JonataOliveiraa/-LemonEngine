@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useEditorStore } from '../../store';
-import { EditorHandle } from '../../types'; // Certifique-se de que types.ts foi atualizado
+import { EditorHandle } from '../../types';
 import Sidebar from './Sidebar';
 import EntityEditor from './editors/ItemEditor';
 import ManifestEditor from './editors/ManifestEditor';
@@ -69,12 +69,12 @@ const Editor: React.FC = () => {
         <div className="h-full flex flex-col items-center justify-center text-center p-6 md:p-12 animate-in fade-in duration-700">
             <div className="max-w-md space-y-8">
                 <div className="relative inline-block">
-                    <div className="bg-slate-50 dark:bg-[#252526] p-8 md:p-10 rounded-[2rem] border border-slate-200 dark:border-[#333] shadow-2xl">
+                    <div className="bg-slate-50 dark:bg-[#252526] p-8 md:p-10 rounded-xl border border-slate-200 dark:border-[#333] shadow-lg">
                         <Terminal className="w-12 h-12 md:w-16 md:h-16 text-slate-400 dark:text-slate-600" />
                     </div>
                 </div>
                 <div className="space-y-4 px-4">
-                    <h3 className="text-xl md:text-2xl font-bold text-slate-700 dark:text-slate-300 tracking-tight uppercase">Ready to Hack</h3>
+                    <h3 className="text-2xl md:text-3xl font-righteous text-slate-700 dark:text-slate-300 tracking-wide uppercase">Ready to Hack</h3>
                 </div>
             </div>
         </div>
@@ -129,35 +129,35 @@ const Editor: React.FC = () => {
 
               {/* Direita: Actions (Só aparece se tiver entidade ativa ou main.js) */}
               {(activeEntity || activeEntityId === 'main') && (
-                  <div className="flex items-center gap-1 px-2 dark:border-[#333] bg-white dark:bg-[#252526] h-full shrink-0 z-10 shadow-sm">
+                  <div className="flex items-center gap-1 px-2 dark:border-[#333] bg-slate-100 dark:bg-[#252526] h-full shrink-0 z-10 shadow-sm border-l border-slate-200 dark:border-[#333]">
                       
                       {/* Caminho do Arquivo (Apenas para Entidades) */}
                       {activeEntity && (
-                        <div className="hidden md:block mr-2 text-[9px] text-slate-400 font-mono max-w-[150px] truncate">
+                        <div className="hidden md:block mr-2 text-[10px] text-slate-400 font-mono max-w-[150px] truncate">
                             /{activeEntity.folder || 'Root'}
                         </div>
                       )}
 
                       {/* Botão Mover (Apenas para Entidades) */}
                       {activeEntity && (
-                        <button onClick={() => openMoveModal(activeEntity.id, activeEntity.folder || '')} className="p-1.5 rounded text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-[#333] transition-colors" title="Move File">
+                        <button onClick={() => openMoveModal(activeEntity.id, activeEntity.folder || '')} className="p-1.5 rounded-md text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-[#333] transition-colors" title="Move File">
                             <FolderInput className="w-4 h-4" />
                         </button>
                       )}
                       
                       {/* Botão Inspetor (Apenas para Entidades) */}
                       {activeEntity && (
-                        <button onClick={() => setPropertiesOpen(!isPropertiesOpen)} className={`p-1.5 rounded transition-all ${isPropertiesOpen ? 'bg-[#007acc] text-white' : 'text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-[#333]'}`} title="Inspect">
+                        <button onClick={() => setPropertiesOpen(!isPropertiesOpen)} className={`p-1.5 rounded-md transition-all ${isPropertiesOpen ? 'bg-[#007acc] text-white' : 'text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-[#333]'}`} title="Inspect">
                             <FileSearch className="w-4 h-4" />
                         </button>
                       )}
                       
                       {/* Botão Focar Editor */}
-                      <button onClick={handleFocus} className="p-1.5 rounded text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-[#333] transition-colors" title="Focus Editor">
+                      <button onClick={handleFocus} className="p-1.5 rounded-md text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-[#333] transition-colors" title="Focus Editor">
                           <Lightbulb className="w-4 h-4" />
                       </button>
                       
-                      <div className="w-px h-4 bg-slate-200 dark:bg-[#444] mx-1"></div>
+                      <div className="w-px h-4 bg-slate-300 dark:bg-[#444] mx-1"></div>
 
                       {/* Botão Salvar (Comanda o filho via Ref) */}
                       <button onClick={handleSave} className="flex items-center gap-1.5 px-3 py-1 bg-[#007acc] hover:bg-[#0062a3] text-white rounded-md text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 shadow-sm">
@@ -186,11 +186,11 @@ const Editor: React.FC = () => {
       {moveModal.isOpen && <MoveModal />}
 
       {modalCreateFolder.isOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[300] p-4 animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-[#252526] rounded-2xl w-full max-w-md border border-slate-200 dark:border-[#333] p-6 shadow-2xl">
-            <div className="p-6 border-b border-slate-200 dark:border-[#333] flex justify-between items-center bg-slate-50 dark:bg-[#1e1e1e]">
-              <h2 className="text-xs font-black uppercase tracking-widest text-slate-700 dark:text-white">Create Directory</h2>
-              <button onClick={closeCreateFolderModal} className="text-slate-400 hover:bg-slate-200 dark:hover:bg-[#333] p-2 rounded-lg"><X className="w-5 h-5" /></button>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[300] p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-[#1e1e1e] rounded-xl w-full max-w-md border border-slate-200 dark:border-[#333] shadow-2xl overflow-hidden">
+            <div className="p-4 border-b border-slate-200 dark:border-[#333] flex justify-between items-center bg-slate-50 dark:bg-[#252526]">
+              <h2 className="text-sm font-righteous uppercase tracking-wide text-slate-700 dark:text-white">Create Directory</h2>
+              <button onClick={closeCreateFolderModal} className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors p-1.5"><X className="w-4 h-4" /></button>
             </div>
             <form onSubmit={e => { 
               e.preventDefault(); 
@@ -200,17 +200,17 @@ const Editor: React.FC = () => {
               addFolder(activeWorkspaceId, modalCreateFolder.category, full); 
               setNewFolderName(''); 
               closeCreateFolderModal();
-            }} className="p-10 space-y-8">
-              <div className="space-y-4">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Directory Name</label>
+            }} className="p-6 space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-righteous text-slate-500 uppercase tracking-widest ml-1">Directory Name</label>
                 <input 
                   autoFocus 
                   placeholder="e.g. SubFolder" 
-                  className="w-full bg-slate-50 dark:bg-[#252526] border border-slate-200 dark:border-[#333] rounded-xl px-6 py-5 text-lg md:text-base font-bold text-slate-900 dark:text-white outline-none focus:border-[#007acc] shadow-inner" 
+                  className="w-full bg-slate-50 dark:bg-[#252526] border border-slate-200 dark:border-[#333] rounded-lg px-4 py-3 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-[#007acc] transition-colors" 
                   value={newFolderName} onChange={e => setNewFolderName(e.target.value)} 
                 /> 
               </div>
-              <button className="w-full py-5 bg-[#007acc] hover:bg-[#0062a3] text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-lg transition-all active:scale-95">Add Folder</button>
+              <button className="w-full py-3 bg-[#007acc] hover:bg-[#0062a3] text-white rounded-lg text-xs font-bold uppercase tracking-widest shadow-md transition-all active:scale-95">Add Folder</button>
             </form>
           </div>
         </div>

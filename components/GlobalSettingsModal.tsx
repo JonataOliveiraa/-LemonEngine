@@ -20,9 +20,9 @@ const GlobalSettingsModal: React.FC = () => {
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 animate-in fade-in duration-200">
       <div className="bg-white dark:bg-[#1e1e1e] rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl border border-slate-200 dark:border-[#333] animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh] md:max-h-[80vh]">
         
-        {/* Header */}
+        {/* Header - Usando a fonte Righteous para o Título */}
         <div className="p-4 md:p-5 border-b border-slate-200 dark:border-[#333] flex justify-between items-center bg-slate-50 dark:bg-[#252526] shrink-0">
-          <h2 className="text-sm font-black uppercase tracking-widest flex items-center gap-2 text-slate-800 dark:text-white">
+          <h2 className="text-sm font-righteous uppercase tracking-widest flex items-center gap-2 text-slate-800 dark:text-white">
             <SettingsIcon className="w-4 h-4" /> Configuration
           </h2>
           <button 
@@ -59,7 +59,7 @@ const GlobalSettingsModal: React.FC = () => {
                 {activeTab === 'general' && (
                     <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
                         <div className="space-y-4">
-                            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                            <h3 className="text-[10px] font-righteous text-slate-400 uppercase tracking-widest flex items-center gap-2">
                                 <User className="w-3.5 h-3.5" /> Identity
                             </h3>
                             <input 
@@ -74,19 +74,19 @@ const GlobalSettingsModal: React.FC = () => {
                         <div className="h-px bg-slate-100 dark:bg-[#333]" />
 
                         <div className="space-y-4">
-                            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                            <h3 className="text-[10px] font-righteous text-slate-400 uppercase tracking-widest flex items-center gap-2">
                                 <Sun className="w-3.5 h-3.5" /> Theme
                             </h3>
                             <div className="grid grid-cols-2 gap-4">
                                 <button 
                                     onClick={() => setTheme('light')}
-                                    className={`flex items-center justify-center gap-3 p-4 rounded-xl border-2 transition-all ${theme === 'light' ? 'bg-[#007acc]/10 border-[#007acc] text-[#007acc]' : 'bg-slate-50 dark:bg-[#252526] border-transparent text-slate-400'}`}
+                                    className={`flex items-center justify-center gap-3 p-4 rounded-xl border-2 transition-all font-bold ${theme === 'light' ? 'bg-[#007acc]/10 border-[#007acc] text-[#007acc]' : 'bg-slate-50 dark:bg-[#252526] border-transparent text-slate-400'}`}
                                 >
                                     <Sun className="w-4 h-4" /> Light
                                 </button>
                                 <button 
                                     onClick={() => setTheme('dark')}
-                                    className={`flex items-center justify-center gap-3 p-4 rounded-xl border-2 transition-all ${theme === 'dark' ? 'bg-[#007acc]/10 border-[#007acc] text-[#007acc]' : 'bg-slate-50 dark:bg-[#252526] border-transparent text-slate-400'}`}
+                                    className={`flex items-center justify-center gap-3 p-4 rounded-xl border-2 transition-all font-bold ${theme === 'dark' ? 'bg-[#007acc]/10 border-[#007acc] text-[#007acc]' : 'bg-slate-50 dark:bg-[#252526] border-transparent text-slate-400'}`}
                                 >
                                     <Moon className="w-4 h-4" /> Dark
                                 </button>
@@ -100,7 +100,7 @@ const GlobalSettingsModal: React.FC = () => {
                     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                         {/* Font Size */}
                         <div className="space-y-3">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                            <label className="text-[10px] font-righteous text-slate-400 uppercase tracking-widest flex items-center gap-2">
                                 <Monitor className="w-3.5 h-3.5" /> Font Size ({userProfile.editorFontSize}px)
                             </label>
                             <div className="flex items-center gap-4">
@@ -116,6 +116,19 @@ const GlobalSettingsModal: React.FC = () => {
                                 />
                                 <span className="text-xs font-bold text-slate-400">24px</span>
                             </div>
+                            
+                            {/* Preview box com a fonte Fira Code do editor */}
+                            <div className="mt-4 p-4 rounded-xl bg-slate-50 dark:bg-[#252526] border border-slate-200 dark:border-[#333]">
+                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-2">Preview</p>
+                                <code 
+                                  className="font-mono text-emerald-600 dark:text-emerald-400 block" 
+                                  style={{ fontSize: `${userProfile.editorFontSize}px` }}
+                                >
+                                  function createMod() {'{'}
+                                  <br/>&nbsp;&nbsp;return "Awesome!";
+                                  <br/>{'}'}
+                                </code>
+                            </div>
                         </div>
 
                         <div className="h-px bg-slate-100 dark:bg-[#333]" />
@@ -123,7 +136,7 @@ const GlobalSettingsModal: React.FC = () => {
                         {/* Toggles */}
                         <div className="space-y-4">
                             {/* Word Wrap */}
-                            <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-[#252526] rounded-xl">
+                            <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-[#252526] rounded-xl border border-transparent hover:border-slate-200 dark:hover:border-[#333] transition-colors cursor-pointer" onClick={() => setUserProfile({ wordWrap: !userProfile.wordWrap })}>
                                 <div className="space-y-0.5">
                                     <div className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-white">
                                         <AlignLeft className="w-4 h-4 text-purple-500" /> Word Wrap
@@ -131,7 +144,6 @@ const GlobalSettingsModal: React.FC = () => {
                                     <p className="text-[10px] text-slate-400">Break long lines</p>
                                 </div>
                                 <button 
-                                    onClick={() => setUserProfile({ wordWrap: !userProfile.wordWrap })}
                                     className={`w-10 h-6 rounded-full relative transition-colors ${userProfile.wordWrap ? 'bg-purple-500' : 'bg-slate-300 dark:bg-[#444]'}`}
                                 >
                                     <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform shadow-sm ${userProfile.wordWrap ? 'left-5' : 'left-1'}`} />
@@ -139,7 +151,7 @@ const GlobalSettingsModal: React.FC = () => {
                             </div>
 
                             {/* Auto Save */}
-                            <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-[#252526] rounded-xl">
+                            <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-[#252526] rounded-xl border border-transparent hover:border-slate-200 dark:hover:border-[#333] transition-colors cursor-pointer" onClick={() => setUserProfile({ autoSave: !userProfile.autoSave })}>
                                 <div className="space-y-0.5">
                                     <div className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-white">
                                         <Save className="w-4 h-4 text-[#007acc]" /> Auto-Save
@@ -147,7 +159,6 @@ const GlobalSettingsModal: React.FC = () => {
                                     <p className="text-[10px] text-slate-400">Save every 1.5s</p>
                                 </div>
                                 <button 
-                                    onClick={() => setUserProfile({ autoSave: !userProfile.autoSave })}
                                     className={`w-10 h-6 rounded-full relative transition-colors ${userProfile.autoSave ? 'bg-[#007acc]' : 'bg-slate-300 dark:bg-[#444]'}`}
                                 >
                                     <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform shadow-sm ${userProfile.autoSave ? 'left-5' : 'left-1'}`} />

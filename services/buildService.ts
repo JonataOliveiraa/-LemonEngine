@@ -121,12 +121,15 @@ const base64ToUint8Array = (base64: string) => {
 
 // --- HELPER: Formatação de Categoria ---
 const getFolderFromCategory = (cat: EntityType) => {
-    if (!cat) return 'Unknown';
+    // Se for BLANK, retorna vazio (Raiz do Content)
+    if (cat === EntityType.BLANK) return '';
     
-    // CORREÇÃO: NPCs deve ser maiúsculo
+    // Mapeamento padrão
+    if (cat === EntityType.ITEM) return 'Items';
     if (cat === EntityType.NPC) return 'NPCs';
-    
-    // Padrão para os outros (Item -> Items, Projectile -> Projectiles)
+    if (cat === EntityType.PROJECTILE) return 'Projectiles';
+    if (cat === EntityType.BUFF) return 'Buffs';
+    // ... adicione os outros conforme necessário, ou use o default:
     const lower = cat.toLowerCase();
     return lower.charAt(0).toUpperCase() + lower.slice(1) + 's';
 };
@@ -230,28 +233,31 @@ SystemLoader.OnModLoad();`);
 
   // 5. PROCESSAR ENTIDADES
   workspace.entities.forEach(entity => {
-    if (entity.type === EntityType.BLANK) return;
-
-    // Determina a pasta base (Agora NPCs virá correto)
     const categoryFolder = getFolderFromCategory(entity.category); 
-    const relativePath = entity.folder ? `${categoryFolder}/${entity.folder}` : categoryFolder;
     
-    // Salva JS
-    contentFolder!.folder(relativePath)!.file(`${entity.internalName}.js`, entity.code);
+    // Se categoryFolder for vazio (BLANK), path começa direto do folder ou raiz
+    let relativePath = categoryFolder;
+    if (entity.folder) {
+        relativePath = relativePath ? `${relativePath}/${entity.folder}` : entity.folder;
+    }
+    
+    // JS
+    // Se relativePath for vazio, salva direto no contentFolder
+    const targetFolder = relativePath ? contentFolder!.folder(relativePath) : contentFolder;
+    targetFolder!.file(`${entity.internalName}.js`, entity.code);
 
-    // Salva Textura Principal
+    // Textura
     if (entity.texture) {
-        texturesFolder!.folder(relativePath)!.file(`${entity.internalName}.png`, base64ToUint8Array(entity.texture));
+        const targetTexFolder = relativePath ? texturesFolder!.folder(relativePath) : texturesFolder;
+        targetTexFolder!.file(`${entity.internalName}.png`, base64ToUint8Array(entity.texture));
     }
     
-    // Salva Textura Secundária
-    if (entity.secondaryTexture) {
-        const texName = entity.relatedProjectileName || `${entity.internalName}_Secondary`;
-        texturesFolder!.folder(relativePath)!.file(`${texName}.png`, base64ToUint8Array(entity.secondaryTexture));
-    }
 
-    // Adiciona ao registro
-    if (!registryData[entity.type]) registryData[entity.type] = [];
+    if (entity.type !== EntityType.BLANK) {
+        if (!registryData[entity.type]) registryData[entity.type] = [];
+        const importPath = `./../Content/${relativePath ? relativePath + '/' : ''}${entity.internalName}.js`;
+        registryData[entity.type].push({ className: entity.internalName, path: importPath });
+    }
     
     const importPath = `./../Content/${relativePath}/${entity.internalName}.js`;
     

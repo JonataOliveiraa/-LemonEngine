@@ -1,14 +1,11 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Remova os @tailwind base, components e utilities. O CDN já faz isso automaticamente. */
 
-/* Estilos Globais que estavam no HTML */
 body {
     margin: 0;
     overflow: hidden;
     height: 100dvh;
     touch-action: manipulation;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Host Grotesk', sans-serif; /* MUDANÇA AQUI! */
 }
 
 .pixelated {
@@ -38,6 +35,16 @@ body {
 .cm-editor {
     height: 100%;
     font-family: 'Fira Code', monospace !important;
+}
+
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
 }
 
 /* Mobile fixes */
