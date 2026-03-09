@@ -33,8 +33,8 @@ const FileTabs: React.FC = () => {
   };
 
   return (
-    // Alterado: flex-1 e min-w-0 para funcionar dentro do flex container do pai
-    <div className="flex-1 flex h-full overflow-x-auto custom-scrollbar-hide select-none items-end min-w-0 bg-slate-100 dark:bg-[#252526]" ref={scrollRef}>
+    // Adicionado as classes que forçam ocultar scrollbar em todos navegadores
+    <div className="flex-1 flex h-full overflow-x-auto scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] select-none items-end min-w-0 bg-slate-100 dark:bg-[#252526]" ref={scrollRef}>
         {openFiles.map(fileId => {
             const info = getFileInfo(fileId);
             const isActive = activeEntityId === fileId;

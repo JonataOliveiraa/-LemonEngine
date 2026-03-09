@@ -20,23 +20,35 @@ const DeleteConfirmation: React.FC = () => {
   const workspace = workspaces.find(w => w.id === activeWorkspaceId);
 
   const affectedFiles = useMemo(() => {
-    if (!workspace || deleteConfirmation.type !== 'folder' || !deleteConfirmation.category) return [];
+    if (!workspace || deleteConfirmation.type !== 'folder' || deleteConfirmation.category === undefined) return [];
     
-    const path = deleteConfirmation.id; 
-    return workspace.entities.filter(e => 
-      e.category === deleteConfirmation.category && 
-      (e.folder === path || e.folder?.startsWith(path + '/'))
-    );
+    const path = deleteConfirmation.id || ''; 
+    const isRoot = path === '';
+
+    return workspace.entities.filter(e => {
+        if (e.category !== deleteConfirmation.category) return false;
+        if (isRoot) return true; 
+        
+        const eFolder = e.folder || '';
+        return eFolder === path || eFolder.startsWith(path + '/');
+    });
   }, [workspace, deleteConfirmation]);
 
   const handleDelete = () => {
+    console.log("=== [1] MODAL CHAMOU DELEÇÃO ===");
+    console.log("Categoria pedida pelo Sidebar:", deleteConfirmation.category);
+    console.log("Caminho (ID) pedido:", deleteConfirmation.id);
+
     if (!activeWorkspaceId) return;
 
     if (deleteConfirmation.type === 'entity') {
       deleteEntity(activeWorkspaceId, deleteConfirmation.id);
       toast.success("File deleted");
-    } else if (deleteConfirmation.type === 'folder' && deleteConfirmation.category) {
-      deleteFolder(activeWorkspaceId, deleteConfirmation.category, deleteConfirmation.id);
+    } else if (deleteConfirmation.type === 'folder' && deleteConfirmation.category !== undefined) {
+      const cat = deleteConfirmation.category;
+      const path = deleteConfirmation.id || '';
+      
+      deleteFolder(activeWorkspaceId, cat, path);
       toast.success("Folder and contents deleted");
     }
     closeDeleteConfirmation();
@@ -44,28 +56,23 @@ const DeleteConfirmation: React.FC = () => {
 
   if (!deleteConfirmation.isOpen) return null;
 
-  // --- LÓGICA DE POSICIONAMENTO ---
   const isMobile = windowSize.w < 768;
   const shouldCenter = isMobile || !deleteConfirmation.position;
   
   let desktopStyle: React.CSSProperties = {};
 
-  // Se for Desktop e tiver posição definida, calcula o "Clamp" (confinamento)
   if (!shouldCenter && deleteConfirmation.position) {
       const { x, y } = deleteConfirmation.position;
       const modalWidth = 320;
       const modalHeight = 250; 
       const margin = 20; 
 
-      // Horizontal: Tenta à direita, se não der, joga pra esquerda
       let left = x + 20; 
       if (left + modalWidth > windowSize.w - margin) {
           left = x - modalWidth - 20;
       }
-      // Garante que não saia da tela
       left = Math.max(margin, Math.min(left, windowSize.w - modalWidth - margin));
 
-      // Vertical: Tenta para baixo, se não der, joga pra cima
       let top = y;
       if (top + modalHeight > windowSize.h - margin) {
           top = windowSize.h - modalHeight - margin;
@@ -77,25 +84,20 @@ const DeleteConfirmation: React.FC = () => {
 
   return (
     <>
-      {/* Overlay Escuro com Blur */}
       <div 
         className={`fixed inset-0 z-[9999] ${shouldCenter ? 'bg-black/80 backdrop-blur-sm' : 'bg-transparent'}`} 
         onClick={closeDeleteConfirmation}
       />
 
-      {/* Modal Popup */}
       <div 
         className={`fixed z-[10000] bg-white dark:bg-[#1e1e1e] border border-slate-200 dark:border-[#333] shadow-2xl overflow-hidden flex flex-col
           ${shouldCenter 
-            /* MOBILE / CENTRALIZADO: Usa translate para centro exato e w-[90%] para margem segura */
             ? 'left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-sm rounded-xl max-h-[90vh]' 
-            /* DESKTOP: Largura fixa e animação suave */
             : 'w-80 rounded-xl animate-in zoom-in-95 duration-100'}
         `}
         style={shouldCenter ? {} : desktopStyle}
         onClick={e => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="p-4 bg-slate-50 dark:bg-[#252526] border-b border-slate-200 dark:border-[#333] flex items-center justify-between shrink-0">
           <h3 className="text-sm font-righteous uppercase tracking-wide text-rose-600 dark:text-rose-500 flex items-center gap-2">
             <Trash2 className="w-4 h-4" /> Confirm Deletion
@@ -105,7 +107,6 @@ const DeleteConfirmation: React.FC = () => {
           </button>
         </div>
 
-        {/* Body (Scrollável se necessário) */}
         <div className="p-5 space-y-4 overflow-y-auto custom-scrollbar">
           <div className="flex items-start gap-3">
             <div className="p-2 bg-rose-100 dark:bg-rose-900/30 rounded-lg text-rose-600 dark:text-rose-400 shrink-0">
@@ -139,7 +140,6 @@ const DeleteConfirmation: React.FC = () => {
           )}
         </div>
 
-        {/* Footer Actions */}
         <div className="p-4 bg-slate-50 dark:bg-[#252526] border-t border-slate-200 dark:border-[#333] flex gap-3 shrink-0">
           <button 
             onClick={closeDeleteConfirmation}

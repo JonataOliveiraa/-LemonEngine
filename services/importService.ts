@@ -12,7 +12,6 @@ const fileToBase64 = (blob: Blob): Promise<string> => {
     });
 };
 
-// Mapeamento de Pastas -> EntityType
 const FOLDER_TO_TYPE: Record<string, EntityType> = {
     'Items': EntityType.ITEM,
     'NPCs': EntityType.NPC,
@@ -40,39 +39,49 @@ export const importModFromZip = async (file: File): Promise<Workspace> => {
     const settingsText = await settingsFile.async("string");
     const settings = JSON.parse(settingsText);
 
-    // 2. Ler Ícone
-    let iconBase64: string | undefined = undefined;
-    const iconFile = zip.file("icon.png") || zip.file("Icon.png");
-    if (iconFile) {
-        const iconBlob = await iconFile.async("blob");
-        iconBase64 = await fileToBase64(iconBlob);
+    // 2. Ler ID do Mod a partir do 1.json
+    let modGuid = settings.guid || uuidv4();
+    const json1File = zip.file("Modified/1.mod/1.json");
+    if (json1File) {
+        try {
+            const parsed1Json = JSON.parse(await json1File.async("string"));
+            if (parsed1Json.id) modGuid = parsed1Json.id;
+        } catch (e) {
+            console.warn("Could not parse 1.json");
+        }
     }
 
-    // 3. Processar Autores e Avatares
+    // 3. Ler Ícone (Busca robusta para ignorar Case Sensitivity)
+    let iconBase64: string | undefined = undefined;
+    const iconPath = Object.keys(zip.files).find(p => p === 'Icon.png' || p === 'Icon.gif');
+    if (iconPath) {
+        const iconFile = zip.file(iconPath);
+        if (iconFile) {
+            iconBase64 = await fileToBase64(await iconFile.async("blob"));
+        }
+    }
+
+    // 4. Processar Autores
     const authors: Author[] = await Promise.all(
         (settings.authors || []).map(async (auth: any, index: number) => {
             let avatarBase64 = "";
-            // Tenta achar a imagem em Authors/
-            // O formato costuma ser Authors/nome.png ou Authors/0.png dependendo de como foi buildado
-            // Vamos tentar pelo nome do arquivo referenciado no JSON ou pelo index
-            const possiblePaths = [
-                `Authors/${auth.file}`,
-                `Authors/${index}.png`,
-                `Authors/${index}.jpg`
-            ];
+            const possiblePaths = [ `Authors/${auth.file}`, `Authors/${index}.png`, `Authors/${index}.jpg` ];
 
             for (const path of possiblePaths) {
-                const img = zip.file(path);
-                if (img) {
-                    const blob = await img.async("blob");
-                    avatarBase64 = await fileToBase64(blob);
-                    break;
+                // Busca case-insensitive para os avatares também
+                const exactPath = Object.keys(zip.files).find(p => p.toLowerCase() === path.toLowerCase());
+                if (exactPath) {
+                    const img = zip.file(exactPath);
+                    if (img) {
+                        avatarBase64 = await fileToBase64(await img.async("blob"));
+                        break;
+                    }
                 }
             }
 
             return {
                 name: auth.name,
-                file: avatarBase64 || "", // Base64 para visualização
+                file: avatarBase64 || "", 
                 icon_height: auth.icon_height || 70,
                 color: auth.color || '#ffffff',
                 link: auth.link || ''
@@ -80,80 +89,90 @@ export const importModFromZip = async (file: File): Promise<Workspace> => {
         })
     );
 
-    // 4. Varrer Conteúdo (Modified/1.mod/Content/...)
+    // 5. Varrer Conteúdo (Modified/1.mod/Content/...)
     const contentPrefix = "Modified/1.mod/Content/";
     const texturesPrefix = "Modified/1.mod/Textures/";
     
-    // Filtra apenas arquivos dentro de Content e que sejam .js
     const contentFiles = Object.keys(zip.files).filter(path => 
         path.startsWith(contentPrefix) && path.endsWith(".js")
     );
 
     for (const path of contentFiles) {
-        // Ex: Modified/1.mod/Content/Items/Weapons/Sword.js
-        const relativePath = path.substring(contentPrefix.length); // Items/Weapons/Sword.js
+        const relativePath = path.substring(contentPrefix.length); 
         const parts = relativePath.split('/');
         
-        // parts[0] = "Items" (Categoria)
         const categoryFolder = parts[0];
         const category = FOLDER_TO_TYPE[categoryFolder] || EntityType.BLANK;
 
-        // O nome do arquivo é o último
-        const fileName = parts[parts.length - 1]; // Sword.js
+        const fileName = parts[parts.length - 1]; 
         const internalName = fileName.replace('.js', '');
 
-        // A pasta interna é tudo que está entre a Categoria e o Arquivo
-        // Ex: parts = ['Items', 'Weapons', 'Sword.js'] -> folderParts = ['Weapons']
         const folderParts = parts.slice(1, parts.length - 1);
-        const folderPath = folderParts.join('/'); // "Weapons"
+        const folderPath = folderParts.join('/'); 
 
-        // Ler Código
         const code = await zip.file(path)!.async("string");
 
-        // Tentar achar Textura correspondente
-        // A textura costuma estar na mesma estrutura mas dentro de Textures/
-        // Ex: Modified/1.mod/Textures/Items/Weapons/Sword.png
+        // Textura
         const texturePath = `${texturesPrefix}${categoryFolder}/${folderPath ? folderPath + '/' : ''}${internalName}.png`;
         let textureBase64: string | undefined = undefined;
         
         const textureFile = zip.file(texturePath);
         if (textureFile) {
-            const blob = await textureFile.async("blob");
-            textureBase64 = await fileToBase64(blob);
+            textureBase64 = await fileToBase64(await textureFile.async("blob"));
         }
 
         entities.push({
             id: uuidv4(),
             internalName: internalName,
             displayName: internalName,
-            type: category, // Baseado na pasta Items/NPCs/etc
+            type: category,
             category: category,
-            folder: folderPath, // Pasta relativa (ex: Weapons)
+            folder: folderPath,
             code: code,
             texture: textureBase64,
-            properties: {}, // Seria complexo parsear do JS agora, deixar vazio
+            properties: {},
             hooks: {},
             template: 'Blank'
         });
     }
 
-    // 5. Construir Workspace
+    // 6. Ler Localization (Novo!)
+    const localizationData: Record<string, any> = {};
+    const locPrefix = "Modified/1.mod/Localization/";
+    
+    const locFiles = Object.keys(zip.files).filter(path => 
+        path.startsWith(locPrefix) && path.endsWith(".json")
+    );
+
+    for (const path of locFiles) {
+        const langCode = path.split('/').pop()?.replace('.json', '');
+        if (langCode) {
+            try {
+                const content = await zip.file(path)!.async("string");
+                localizationData[langCode] = JSON.parse(content);
+            } catch (e) {
+                console.warn(`Failed to parse localization file: ${langCode}`);
+            }
+        }
+    }
+
+    // 7. Construir Workspace Final
     const newWorkspace: Workspace = {
-        id: uuidv4(), // Novo ID interno para evitar conflitos
+        id: uuidv4(),
         name: settings.title || "Imported Mod",
         icon: iconBase64,
         version: settings.version || 1,
-        settingsGuid: settings.guid || uuidv4(), // Mantém GUID se existir para compatibilidade
+        settingsGuid: modGuid, 
         internalId: settings.title?.replace(/\s+/g, '') || "ImportedMod",
         description: "Imported via ZIP",
         authors: authors,
         entities: entities,
+        localization: Object.keys(localizationData).length > 0 ? localizationData : undefined, // Associa as traduções lidas!
         lastModified: Date.now(),
         emptyFolders: {},
         mainJsInjection: undefined 
     };
 
-    // Tenta ler o main.js customizado se existir
     const mainJsFile = zip.file("Modified/1.mod/main.js");
     if (mainJsFile) {
         newWorkspace.mainJsInjection = await mainJsFile.async("string");

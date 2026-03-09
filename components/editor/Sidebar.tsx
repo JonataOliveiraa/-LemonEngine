@@ -2,7 +2,9 @@ import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { useEditorStore } from '../../store';
 import { EntityType } from '../../types';
 import { 
-  Plus, ChevronDown, ChevronRight, Folder, FileCode, FileJson, X, FolderPlus, Terminal, Trash2, FolderInput, Box
+  Plus, ChevronDown, ChevronRight, Folder, FileCode, FileJson, X, 
+  FolderPlus, Terminal, Trash2, FolderInput, Box, Globe, Image as ImageIcon, 
+  FolderLock, FolderCog, Code2, Settings
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -24,6 +26,93 @@ const CATEGORY_TO_FOLDER: Record<string, string> = {
   [EntityType.BLANK]: '' 
 };
 
+// Arquivos do Framework TL para simular o diretório /public/framework/TL
+const TL_FILES = [
+    'GlobalHooks.js',
+    'GlobalItem.js',
+    'GlobalLoot.js',
+    'GlobalNPC.js',
+    'GlobalProjectile.js',
+    'GlobalTile.js',
+    'ModAsset.js',
+    'ModBackgrounds.js',
+    'ModBiome.js',
+    'ModBuff.js',
+    'ModCloud.js',
+    'ModGore.js',
+    'ModHooks.js',
+    'ModImports.js',
+    'ModItem.js',
+    'ModLocalization.js',
+    'ModMenu.js',
+    'ModNPC.js',
+    'ModPlayer.js',
+    'ModProjectile.js',
+    'ModRecipe.js',
+    'ModSystem.js',
+    'ModTexture.js',
+    'ModTexturedType.js',
+    'NPCHappiness.js',
+    'NPCLoot.js',
+    'NPCShop.js',
+    'NPCSpawnInfo.js',
+    'PlayerDB.js',
+    'ProjAI.js',
+    'SceneEffectPriority.js',
+    'Subworld.js',
+    'WorldDB.js',
+    'Core/BinarySerializer.js',
+    'Core/DatabaseManager.js',
+    'Core/FileManager.js',
+    'Core/ModLoader.js',
+    'Core/Prototypes.js',
+    'Enums/BiomeID.js',
+    'Enums/CloudID.js',
+    'Enums/DashID.js',
+    'Enums/ItemRarityID.js',
+    'Enums/MusicID.js',
+    'Enums/NPCAIStyleID.js',
+    'Enums/ProjAIStyleID.js',
+    'Hooks/Chat.js',
+    'Hooks/Cloud.js',
+    'Hooks/GameContent.js',
+    'Hooks/Item.js',
+    'Hooks/Lang.js',
+    'Hooks/Main.js',
+    'Hooks/NPC.js',
+    'Hooks/Player.js',
+    'Hooks/Projectile.js',
+    'Hooks/Recipe.js',
+    'Hooks/Wiring.js',
+    'Hooks/WorldGen.js',
+    'Loaders/BackgroundLoaders.js',
+    'Loaders/BiomeLoader.js',
+    'Loaders/BuffLoader.js',
+    'Loaders/CloudLoader.js',
+    'Loaders/CombinedLoader.js',
+    'Loaders/GoreLoader.js',
+    'Loaders/ItemLoader.js',
+    'Loaders/MenuLoader.js',
+    'Loaders/NPCLoader.js',
+    'Loaders/PlayerLoader.js',
+    'Loaders/ProjectileLoader.js',
+    'Loaders/SceneEffectLoader.js',
+    'Loaders/SubworldLoader.js',
+    'Loaders/SystemLoader.js',
+    'Loaders/TileLoader.js',
+    'Modules/Camera.js',
+    'Modules/Color.js',
+    'Modules/Effects.js',
+    'Modules/MathHelper.js',
+    'Modules/Point16.js',
+    'Modules/Rand.js',
+    'Modules/Rectangle.js',
+    'Modules/TileData.js',
+    'Modules/Vector2.js',
+    'Modules/Utils/Prefix.js',
+    'Modules/Utils/World.js'
+];
+
 interface TreeNode {
   name: string;
   path: string; 
@@ -34,12 +123,15 @@ interface TreeNode {
 }
 
 const Sidebar: React.FC = () => {
+  // Puxando tudo do store, incluindo o viewMode que usaremos para as abas especiais
   const { 
     workspaces, activeWorkspaceId, setActiveEntity, activeEntityId, 
     setSidebarOpen, expandedFolders, toggleFolder,
     openCreateFolderModal, openCreationModal, openDeleteConfirmation,
-    openRenameModal, moveEntity
+    moveEntity
   } = useEditorStore();
+  
+  const viewMode = useEditorStore(state => state.viewMode);
 
   const workspace = workspaces.find(w => w.id === activeWorkspaceId);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -52,11 +144,14 @@ const Sidebar: React.FC = () => {
 
   useEffect(() => {
     if (activeEntityId) {
-      const activeEl = document.getElementById(`tree-item-${activeEntityId}`);
+      const activeEl = document.getElementById(`tree-item-${activeEntityId.replace(/[/\\.]/g, '-')}`);
       if (activeEl) activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   }, [activeEntityId]);
 
+  // ==========================================
+  // 1. ÁRVORE DO CONTEÚDO DO USUÁRIO (CONTENT)
+  // ==========================================
   const fileTree = useMemo(() => {
     const root: TreeNode = { name: 'root', path: '', type: 'folder', children: {} };
     if (!workspace) return root;
@@ -92,7 +187,7 @@ const Sidebar: React.FC = () => {
         return current;
     };
 
-    // 1. Inserir Pastas Vazias
+    // Inserir Pastas Vazias
     Object.entries(workspace.emptyFolders).forEach(([cat, paths]) => {
        const catFolder = CATEGORY_TO_FOLDER[cat as EntityType];
        paths.forEach(p => {
@@ -102,7 +197,7 @@ const Sidebar: React.FC = () => {
        });
     });
 
-    // 2. Inserir Entidades
+    // Inserir Entidades (Arquivos js criados pelo usuário)
     workspace.entities.forEach(entity => {
         const catFolder = CATEGORY_TO_FOLDER[entity.category];
         let pathParts: string[] = [];
@@ -120,6 +215,40 @@ const Sidebar: React.FC = () => {
     return root;
   }, [workspace]);
 
+  // ==========================================
+  // 2. ÁRVORE DO FRAMEWORK (TL)
+  // ==========================================
+  const tlTree = useMemo(() => {
+    const root: TreeNode = { name: 'root', path: '', type: 'folder', children: {} };
+    const insertNode = (pathParts: string[]) => {
+        let current = root;
+        let pathAccumulator = 'tl'; // Prefixo "tl" para evitar colisão de pastas no estado expandedFolders
+
+        pathParts.forEach((part, idx) => {
+            const isLast = idx === pathParts.length - 1;
+            pathAccumulator = `${pathAccumulator}/${part}`;
+
+            if (!current.children[part]) {
+                current.children[part] = { 
+                    name: part, 
+                    path: pathAccumulator, 
+                    type: isLast ? 'file' : 'folder',
+                    // Para arquivos TL, o entityId terá o prefixo "tl:" para o Editor.tsx identificar depois
+                    entityId: isLast ? `tl:${pathParts.join('/')}` : undefined,
+                    children: {} 
+                };
+            }
+            current = current.children[part];
+        });
+    };
+
+    TL_FILES.forEach(file => insertNode(file.split('/')));
+    return root;
+  }, []);
+
+  // ==========================================
+  // LÓGICA DE EVENTOS (Drag & Drop, Criação, Deleção)
+  // ==========================================
   const getContextFromPath = (path: string) => {
       const rootFolder = path.split('/')[0];
       const systemCategory = Object.entries(CATEGORY_TO_FOLDER).find(([_, v]) => v && v === rootFolder)?.[0] as EntityType | undefined;
@@ -129,7 +258,6 @@ const Sidebar: React.FC = () => {
       if (systemCategory) {
           dbFolder = path.replace(rootFolder, '').replace(/^\//, '');
       }
-
       return { category, dbFolder, isSystemRoot: !!systemCategory && path === rootFolder };
   };
 
@@ -147,31 +275,13 @@ const Sidebar: React.FC = () => {
 
   const handleDelete = (e: React.MouseEvent, node: TreeNode) => {
       e.stopPropagation();
-      
       const clickPosition = { x: e.clientX, y: e.clientY };
 
       if (node.type === 'file' && node.entityId) {
-          openDeleteConfirmation({ 
-              type: 'entity', 
-              id: node.entityId, 
-              name: node.name,
-              position: clickPosition 
-          });
+          openDeleteConfirmation({ type: 'entity', id: node.entityId, name: node.name, position: clickPosition });
       } else {
-          const { category, dbFolder, isSystemRoot } = getContextFromPath(node.path);
-          
-          if (isSystemRoot) {
-              toast.error("Cannot delete system root folders.");
-              return;
-          }
-          
-          openDeleteConfirmation({ 
-              type: 'folder', 
-              id: dbFolder, 
-              name: node.name, 
-              category: category,
-              position: clickPosition 
-          });
+          const { category, dbFolder } = getContextFromPath(node.path);
+          openDeleteConfirmation({ type: 'folder', id: dbFolder, name: node.name, category: category, position: clickPosition });
       }
   };
 
@@ -193,17 +303,20 @@ const Sidebar: React.FC = () => {
     setIsDragging(false); setDragItem(null); setDropTarget(null);
   };
 
-  const renderTree = (node: TreeNode) => {
+  // ==========================================
+  // MOTOR DE RENDERIZAÇÃO DA ÁRVORE (Usado para Content e TL)
+  // ==========================================
+  const renderTree = (node: TreeNode, isReadonly: boolean = false) => {
       const nodes = Object.values(node.children).sort((a, b) => {
           if (a.type !== b.type) return a.type === 'folder' ? -1 : 1; 
           return a.name.localeCompare(b.name);
       });
 
       return (
-          <div className="pl-3 border-l border-slate-200 dark:border-[#333] ml-1.5 mt-0.5">
+          <div className="pl-3 border-l border-slate-200 dark:border-[#333] ml-4 mt-0.5">
               {nodes.map(child => {
                   const isExpanded = expandedFolders[child.path];
-                  const isDropTarget = isDragging && dropTarget === child.path;
+                  const isDropTarget = !isReadonly && isDragging && dropTarget === child.path;
                   
                   if (child.type === 'folder') {
                       return (
@@ -211,41 +324,51 @@ const Sidebar: React.FC = () => {
                               <div 
                                   className={`flex items-center group py-1.5 pr-2 cursor-pointer rounded-lg select-none transition-colors ${isDropTarget ? 'bg-[#007acc]/20 border border-[#007acc]' : 'hover:bg-slate-100 dark:hover:bg-[#2a2d2e]'}`}
                                   onClick={() => toggleFolder(child.path)}
-                                  onMouseEnter={() => isDragging && setDropTarget(child.path)}
+                                  onMouseEnter={() => !isReadonly && isDragging && setDropTarget(child.path)}
                               >
                                   <div className="mr-1 text-slate-400">
                                       {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
                                   </div>
-                                  <div className="mr-1.5 text-[#007acc]">
+                                  <div className={`mr-1.5 ${isReadonly ? 'text-slate-400' : 'text-[#007acc]'}`}>
                                       <Folder className="w-3.5 h-3.5 fill-current" />
                                   </div>
-                                  <span className="text-xs font-medium text-slate-700 dark:text-slate-300 flex-1 truncate">
+                                  <span className={`text-xs font-medium flex-1 truncate ${isReadonly ? 'text-slate-500 dark:text-slate-400' : 'text-slate-700 dark:text-slate-300'}`}>
                                       {child.name}
                                   </span>
                                   
-                                  <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity gap-0.5">
-                                      {!child.category && (
-                                          <button onClick={(e) => handleDelete(e, child)} className="p-1 hover:bg-rose-500/20 text-slate-400 hover:text-rose-500 rounded-md transition-colors"><Trash2 className="w-3 h-3" /></button>
-                                      )}
-                                      <button onClick={(e) => handleCreateFolder(e, child.path)} className="p-1 hover:bg-slate-300 dark:hover:bg-[#444] rounded-md text-slate-500 transition-colors"><FolderPlus className="w-3 h-3" /></button>
-                                      <button onClick={(e) => handleCreateFile(e, child.path)} className="p-1 hover:bg-slate-300 dark:hover:bg-[#444] rounded-md text-slate-500 transition-colors"><Plus className="w-3 h-3" /></button>
-                                  </div>
+                                  {/* Botões de Ação Ocultos (Apenas para pastas editáveis) */}
+                                  {!isReadonly && (
+                                      <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity gap-0.5">
+                                          {!child.category && (
+                                              <button onClick={(e) => handleDelete(e, child)} className="p-1 hover:bg-rose-500/20 text-slate-400 hover:text-rose-500 rounded-md transition-colors"><Trash2 className="w-3 h-3" /></button>
+                                          )}
+                                          <button onClick={(e) => handleCreateFolder(e, child.path)} className="p-1 hover:bg-slate-300 dark:hover:bg-[#444] rounded-md text-slate-500 transition-colors"><FolderPlus className="w-3 h-3" /></button>
+                                          <button onClick={(e) => handleCreateFile(e, child.path)} className="p-1 hover:bg-slate-300 dark:hover:bg-[#444] rounded-md text-slate-500 transition-colors"><Plus className="w-3 h-3" /></button>
+                                      </div>
+                                  )}
                               </div>
-                              {isExpanded && renderTree(child)}
+                              {isExpanded && renderTree(child, isReadonly)}
                           </div>
                       );
                   } else {
                       return (
                           <div 
                               key={child.path} 
-                              id={`tree-item-${child.entityId}`}
+                              id={`tree-item-${child.entityId?.replace(/[/\\.]/g, '-')}`}
                               className={`flex items-center group py-1.5 pl-5 pr-2 cursor-pointer rounded-lg mb-0.5 select-none transition-colors ${activeEntityId === child.entityId ? 'bg-[#007acc]/10 text-[#007acc] font-bold' : 'hover:bg-slate-100 dark:hover:bg-[#2a2d2e] text-slate-500 dark:text-slate-400'} ${isDragging && dragItem?.id === child.entityId ? 'opacity-50' : ''}`}
-                              onClick={() => child.entityId && setActiveEntity(child.entityId)}
-                              onMouseDown={(e) => child.entityId && handleMouseDown(e, child.entityId, child.name)}
+                              onClick={() => {
+                                  if (child.entityId) {
+                                      useEditorStore.setState({ viewMode: 'entities' }); // Força o painel do editor de código
+                                      setActiveEntity(child.entityId);
+                                  }
+                              }}
+                              onMouseDown={(e) => !isReadonly && child.entityId && handleMouseDown(e, child.entityId, child.name)}
                           >
-                              <FileCode className="w-3.5 h-3.5 mr-2 shrink-0 opacity-70" />
+                              <FileCode className={`w-3.5 h-3.5 mr-2 shrink-0 ${isReadonly ? 'opacity-40' : 'opacity-70'}`} />
                               <span className="text-xs truncate flex-1">{child.name}</span>
-                              <button onClick={(e) => handleDelete(e, child)} className="p-1 opacity-0 group-hover:opacity-100 hover:text-rose-500 rounded-md hover:bg-rose-500/10 transition-all"><Trash2 className="w-3 h-3" /></button>
+                              {!isReadonly && (
+                                  <button onClick={(e) => handleDelete(e, child)} className="p-1 opacity-0 group-hover:opacity-100 hover:text-rose-500 rounded-md hover:bg-rose-500/10 transition-all"><Trash2 className="w-3 h-3" /></button>
+                              )}
                           </div>
                       );
                   }
@@ -256,7 +379,7 @@ const Sidebar: React.FC = () => {
 
   return (
     <div 
-        className="h-full bg-slate-50 dark:bg-[#252526] flex flex-col overflow-hidden w-full border-r border-slate-200 dark:border-[#333]"
+        className="h-full bg-slate-50 dark:bg-[#202020] flex flex-col overflow-hidden w-full border-r border-slate-200 dark:border-[#333]"
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
@@ -266,59 +389,125 @@ const Sidebar: React.FC = () => {
         <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-2 hover:bg-slate-100 dark:hover:bg-[#333] rounded-lg text-slate-400 transition-colors"><X className="w-5 h-5" /></button>
       </div>
       
-      <div ref={scrollRef} className="flex-1 overflow-y-auto custom-scrollbar pb-20">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto custom-scrollbar pb-20 pt-3 space-y-0.5 px-2">
+        
+        {/* ======================= */}
+        {/* PASTA RAIZ: CONTENT     */}
+        {/* ======================= */}
+        <div className="group">
+            <div 
+                onClick={() => toggleFolder('root_content')} 
+                className="flex items-center justify-between w-full px-2 py-2 rounded-lg cursor-pointer hover:bg-slate-200 dark:hover:bg-[#2a2d2e] transition-colors"
+                onMouseEnter={() => isDragging && setDropTarget('')}
+            >
+                <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
+                    {expandedFolders.root_content ? <ChevronDown className="w-3.5 h-3.5 text-slate-400" /> : <ChevronRight className="w-3.5 h-3.5 text-slate-400" />}
+                    <Folder className="w-4 h-4 text-emerald-500 fill-emerald-500/20" />
+                    <span className="text-xs font-bold tracking-wide">Content</span>
+                </div>
+                
+                {/* Botões de Ação Ocultos */}
+                <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={(e) => { e.stopPropagation(); openCreateFolderModal(EntityType.BLANK, ''); }} className="p-1 hover:bg-slate-300 dark:hover:bg-[#444] rounded-md text-slate-500 transition-colors" title="New Folder"><FolderPlus className="w-3.5 h-3.5" /></button>
+                    <button onClick={(e) => { e.stopPropagation(); openCreationModal(EntityType.BLANK, ''); }} className="p-1 hover:bg-slate-300 dark:hover:bg-[#444] rounded-md text-slate-500 transition-colors" title="New File"><Plus className="w-3.5 h-3.5" /></button>
+                </div>
+            </div>
+            {/* Conteúdo da Pasta Content */}
+            {expandedFolders.root_content && (
+                <div className="pb-2">
+                    {renderTree(fileTree, false)}
+                    {Object.keys(fileTree.children).length === 0 && (
+                        <div className="pl-10 py-3 flex items-center gap-2 opacity-40">
+                            <Box className="w-4 h-4 text-slate-400" />
+                            <span className="text-[10px] font-righteous text-slate-500 uppercase tracking-widest">Empty</span>
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+
+        {/* ======================= */}
+        {/* PASTA RAIZ: LOCALIZATION*/}
+        {/* ======================= */}
         <div 
-            onClick={() => toggleFolder('content')} 
-            className="flex items-center justify-between w-full px-4 py-2.5 bg-slate-200 dark:bg-[#333333] cursor-pointer sticky top-0 z-10 border-b border-slate-300 dark:border-[#444] group mt-0 transition-colors"
-            onMouseEnter={() => isDragging && setDropTarget('')}
+            onClick={() => { useEditorStore.setState({ viewMode: 'localization' }); setActiveEntity(null); }}
+            className={`flex items-center gap-3 px-2 py-2 ml-5 cursor-pointer rounded-lg transition-colors ${viewMode === 'localization' ? 'bg-[#007acc]/10 text-[#007acc] font-bold' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#2a2d2e]'}`}
         >
-            <div className="flex items-center">
-                {expandedFolders.content ? <ChevronDown className="w-3.5 h-3.5 mr-2 text-slate-500" /> : <ChevronRight className="w-3.5 h-3.5 mr-2 text-slate-500" />}
-                <span className="text-xs font-righteous uppercase tracking-widest text-slate-700 dark:text-slate-200">Mod Content</span>
-            </div>
-            
-            <div className="flex items-center gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
-               <button 
-                  onClick={(e) => { e.stopPropagation(); openCreateFolderModal(EntityType.BLANK, ''); }} 
-                  className="p-1.5 hover:bg-slate-300 dark:hover:bg-[#444] rounded-md text-slate-600 dark:text-slate-300 transition-colors"
-                  title="New Folder (Root)"
-               >
-                  <FolderPlus className="w-3.5 h-3.5" />
-               </button>
-               <button 
-                  onClick={(e) => { e.stopPropagation(); openCreationModal(EntityType.BLANK, ''); }} 
-                  className="p-1.5 hover:bg-slate-300 dark:hover:bg-[#444] rounded-md text-slate-600 dark:text-slate-300 transition-colors"
-                  title="New File (Root)"
-               >
-                  <Plus className="w-3.5 h-3.5" />
-               </button>
-            </div>
+            <Globe className="w-4 h-4 text-blue-500" />
+            <span className="text-xs font-bold tracking-wide">Localization</span>
         </div>
 
-        {expandedFolders.content && (
-            <div className="py-2 pr-2">
-                {renderTree(fileTree)}
-                {/* MENSAGEM SE ESTIVER VAZIO */}
-                {Object.keys(fileTree.children).length === 0 && (
-                    <div className="px-6 py-6 text-center opacity-40">
-                        <Box className="w-8 h-8 mx-auto mb-2 text-slate-400" />
-                        <p className="text-[10px] font-righteous text-slate-500 uppercase tracking-widest">Empty Content</p>
-                    </div>
-                )}
-            </div>
-        )}
-
-        <div className="mt-4">
-          <div className="flex items-center w-full px-4 py-2.5 text-xs text-slate-400 font-righteous uppercase tracking-widest border-b border-slate-200 dark:border-[#333] mb-1">System</div>
-          <button onClick={() => setActiveEntity('main')} className={`w-full flex items-center gap-2 px-4 py-2 text-[11px] transition-colors rounded-none ${activeEntityId === 'main' ? 'bg-[#007acc]/10 text-[#007acc] font-bold border-r-2 border-[#007acc]' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-[#2a2d2e] border-r-2 border-transparent'}`}>
-              <Terminal className="w-3.5 h-3.5" /> main.js
-          </button>
-          <button onClick={() => setActiveEntity('settings')} className={`w-full flex items-center gap-2 px-4 py-2 text-[11px] transition-colors rounded-none ${activeEntityId === 'settings' ? 'bg-[#007acc]/10 text-[#007acc] font-bold border-r-2 border-[#007acc]' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-[#2a2d2e] border-r-2 border-transparent'}`}>
-              <FileJson className="w-3.5 h-3.5" /> Settings.json
-          </button>
+        {/* ======================= */}
+        {/* PASTA RAIZ: REGISTER    */}
+        {/* ======================= */}
+        <div className="flex items-center gap-3 px-2 py-2 ml-5 cursor-not-allowed opacity-50 rounded-lg text-slate-500">
+            <FolderLock className="w-4 h-4" />
+            <span className="text-xs font-bold tracking-wide">Register</span>
         </div>
+
+        {/* ======================= */}
+        {/* PASTA RAIZ: TEXTURES    */}
+        {/* ======================= */}
+        <div 
+            onClick={() => { useEditorStore.setState({ viewMode: 'textures' }); setActiveEntity(null); }}
+            className={`flex items-center gap-3 px-2 py-2 ml-5 cursor-pointer rounded-lg transition-colors ${viewMode === 'textures' ? 'bg-[#007acc]/10 text-[#007acc] font-bold' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#2a2d2e]'}`}
+        >
+            <ImageIcon className="w-4 h-4 text-purple-500" />
+            <span className="text-xs font-bold tracking-wide">Textures</span>
+        </div>
+
+        {/* ======================= */}
+        {/* PASTA RAIZ: TL (READONLY)*/}
+        {/* ======================= */}
+        <div className="group mt-2">
+            <div 
+                onClick={() => toggleFolder('root_tl')} 
+                className="flex items-center justify-between w-full px-2 py-2 rounded-lg cursor-pointer hover:bg-slate-200 dark:hover:bg-[#2a2d2e] transition-colors"
+            >
+                <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
+                    {expandedFolders.root_tl ? <ChevronDown className="w-3.5 h-3.5 text-slate-400" /> : <ChevronRight className="w-3.5 h-3.5 text-slate-400" />}
+                    <FolderCog className="w-4 h-4 text-rose-500 fill-rose-500/20" />
+                    <span className="text-xs font-bold tracking-wide">TL</span>
+                </div>
+            </div>
+            {/* Conteúdo da Pasta TL */}
+            {expandedFolders.root_tl && (
+                <div className="pb-2">
+                    {renderTree(tlTree, true)}
+                </div>
+            )}
+        </div>
+
+        {/* ======================= */}
+        {/* ARQUIVO RAIZ: main.js   */}
+        {/* ======================= */}
+        <div 
+            onClick={() => { useEditorStore.setState({ viewMode: 'entities' }); setActiveEntity('main'); }}
+            className={`flex items-center gap-3 px-2 py-2 ml-5 cursor-pointer rounded-lg transition-colors mt-2 ${activeEntityId === 'main' ? 'bg-[#007acc]/10 text-[#007acc] font-bold' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#2a2d2e]'}`}
+        >
+            <Code2 className="w-4 h-4 text-[#f7ff00]" />
+            <span className="text-xs font-bold tracking-wide">main.js</span>
+        </div>
+
+        {/* ======================= */}
+        {/* SEÇÃO DO SISTEMA        */}
+        {/* ======================= */}
+        <div className="mt-8 mb-2">
+          <div className="px-4 py-2 text-[10px] text-slate-400 font-righteous uppercase tracking-widest border-b border-slate-200 dark:border-[#333]/50 mb-2">
+              System
+          </div>
+          <div 
+              onClick={() => { useEditorStore.setState({ viewMode: 'entities' }); setActiveEntity('settings'); }}
+              className={`flex items-center gap-3 px-4 py-2 mx-2 cursor-pointer rounded-lg transition-colors ${activeEntityId === 'settings' ? 'bg-[#007acc]/10 text-[#007acc] font-bold' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#2a2d2e]'}`}
+          >
+              <Settings className="w-4 h-4 text-slate-500" />
+              <span className="text-xs font-bold tracking-wide">Settings.json</span>
+          </div>
+        </div>
+
       </div>
 
+      {/* FLOAT DE DRAG & DROP */}
       {isDragging && dragItem && (
           <div 
             className="fixed pointer-events-none bg-[#007acc] text-white px-3 py-2 rounded-lg shadow-2xl z-[9999] text-xs font-bold flex items-center gap-2"

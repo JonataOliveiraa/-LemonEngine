@@ -4,6 +4,7 @@ import { Plus, Search, Box, Settings, Image as ImageIcon, X as CloseIcon, AlertT
 import { toast } from 'sonner';
 import { Author } from '../../types';
 import { importModFromZip } from '../../services/importService';
+import IconPng from '../../public/assets/icon.png'
 
 const Dashboard: React.FC = () => {
   const { workspaces, addWorkspace, importWorkspace, deleteWorkspace, setActiveWorkspace, setGlobalSettingsOpen } = useEditorStore();
@@ -117,15 +118,13 @@ const Dashboard: React.FC = () => {
         {/* HEADER */}
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-8 mb-12 animate-in fade-in slide-in-from-top duration-500 pt-4">
           <div className="flex items-center gap-5">
-            {/* Reduzido de rounded-2xl para rounded-xl */}
             <div className="w-14 h-14 bg-[#007acc] rounded-xl shadow-xl shadow-blue-500/20 flex items-center justify-center overflow-hidden shrink-0 border border-white/20 dark:border-[#333]">
                <img 
-                 src="/assets/icon.png" 
+                 src={IconPng}
                  alt="Logo" 
                  className="w-full h-full object-contain drop-shadow-sm" 
                  onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.classList.remove('hidden'); }}
                />
-               <Zap className="w-8 h-8 text-white hidden" />
             </div>
             <div>
               {/* Fonte Righteous no Logo */}

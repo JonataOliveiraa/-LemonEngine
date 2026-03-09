@@ -1,117 +1,156 @@
 <div align="center">
-  <img src="assets/logo.png" alt="LemonEngine Logo" width="200"/>
+  <img src="public/assets/logo.png" alt="LemonEngine Logo" width="180"/>
   <h1>LemonEngine</h1>
-  <p><strong>O Estúdio de Desenvolvimento Definitivo para Mods de Terraria Mobile (TL Pro).</strong></p>
+  <p><strong>The definitive development studio for Terraria Mobile mods (TL Pro).</strong></p>
+
+  <p>
+    <a href="https://github.com/JonataOliveiraa/-LemonEngine/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-LemonEngine%20NCL-yellow.svg" alt="License"/></a>
+    <a href="https://discord.gg/J2xFF4cDk9"><img src="https://img.shields.io/discord/J2xFF4cDk9?logo=discord&label=Discord&color=5865F2" alt="Discord"/></a>
+    <img src="https://img.shields.io/badge/React-19-61dafb?logo=react" alt="React 19"/>
+    <img src="https://img.shields.io/badge/TypeScript-5.8-3178c6?logo=typescript" alt="TypeScript"/>
+    <img src="https://img.shields.io/badge/Vite-6-646cff?logo=vite" alt="Vite"/>
+  </p>
 </div>
 
 ---
 
-## Sobre o Projeto
+## Overview
 
-O **LemonEngine** é uma IDE moderna baseada na web, projetada para simplificar, acelerar e democratizar a criação de mods para o **Terraria** em dispositivos móveis, especificamente utilizando o carregador **TL Pro**.
+**LemonEngine** is a modern, browser-based IDE designed to simplify and accelerate mod development for **Terraria** on mobile devices, specifically targeting the **TL Pro** mod loader.
 
-Criar mods manualmente envolve gerenciar dezenas de arquivos `.js`, estruturas de pastas complexas e códigos repetitivos (boilerplate). O LemonEngine elimina essa complexidade oferecendo uma interface visual intuitiva que gerencia todo o ciclo de vida do desenvolvimento, desde a criação de arquivos até a compilação final.
-
-### Para quem é esta ferramenta?
-* **Modders iniciantes:** Crie seu primeiro item sem configurar ambientes complexos.
-* **Modders experientes:** Acelere o fluxo de trabalho e evite tarefas repetitivas.
-* **Equipes de desenvolvimento:** Gerencie assets e código de forma colaborativa.
+Creating mods manually means juggling dozens of `.js` files, complex folder hierarchies, and endless boilerplate code. LemonEngine removes that friction entirely — offering a visual, intuitive interface that manages the full development lifecycle, from entity creation to final build output.
 
 ---
 
-## ✨ Principais Funcionalidades
+## Who Is This For?
 
-### Gestão de Workspaces
-Trabalhe em múltiplos projetos simultaneamente.
-* **Dashboard Moderno:** Gerencie seus mods, crie novos ou importe arquivos `.zip` existentes.
-* **Importação Inteligente:** O sistema analisa a estrutura de pastas, `Settings.json` e recria entidades automaticamente.
-* **Persistência Local:** Todos os dados são salvos automaticamente no IndexedDB do navegador.
-
-### Editor de Código Avançado
-Baseado no **CodeMirror 6**, otimizado para JavaScript e API do TL Pro.
-* **Autocomplete Inteligente:** Sugestões de classes, métodos e propriedades do TL Pro.
-* **Snippets:** Modelos rápidos para `SetDefaults`, `OnHitNPC`, etc.
-* **Linting:** Validação de sintaxe em tempo real.
-* **Navegação:** Suporte a atalhos de teclado e navegação W/S para mobile.
-
-### Gerenciador de Texturas (Texture Atlas)
-Organize sprites visualmente sem lidar com caminhos de arquivo manualmente.
-* **Path-Aware:** Cria automaticamente a estrutura de pastas baseada no caminho da textura.
-* **Visualização:** Grade com suporte a zoom e fundo para transparência.
-* **Detalhes:** Informações sobre dimensões, tamanho e vínculos de entidade.
-
-### Sistema de Criação Rápida (Templates)
-Gere entidades complexas com poucos cliques.
-* **Categorias:** Itens, NPCs, Projéteis, Buffs, Biomas, etc.
-* **Templates Prontos:** Espadas, Armas de Fogo, Bosses, Minions e muito mais.
-* **Quick Create:** Modo para criar arquivos vazios rapidamente.
-
-### Build System Robusto
-Compile seu mod com um clique.
-1.  Coleta todas as entidades e texturas.
-2.  Gera arquivos de registro (`RegisterItems.js`, etc.) automaticamente.
-3.  Injeta o framework TL (biblioteca core).
-4.  Empacota tudo em um `.zip` pronto para a pasta `Mods` do TL Pro.
+| User | How LemonEngine Helps |
+|---|---|
+| **Beginner modders** | Create your first item without touching config files or folder structures |
+| **Experienced modders** | Skip the boilerplate and focus on logic and creativity |
+| **Dev teams** | Manage assets, code, and entities collaboratively in one place |
 
 ---
 
-## 🏗️ Arquitetura do Projeto
+## Features
 
-O LemonEngine é uma SPA (Single Page Application) construída com **React 19** e **Vite**.
+### Workspace Management
+- **Modern Dashboard** — Create, manage, and switch between multiple mod projects
+- **Smart Import** — Paste in an existing `.zip` mod; LemonEngine analyzes the folder structure, reads `Settings.json`, and reconstructs all entities automatically
+- **Local Persistence** — Everything is saved automatically to the browser's IndexedDB — no account or server required
 
-### Estrutura de Pastas
-```text
+### Advanced Code Editor
+Powered by **CodeMirror 6**, tuned for JavaScript and the TL Pro API.
+- **Intelligent Autocomplete** — Suggestions for TL Pro classes, methods, and properties
+- **Snippets** — Pre-built templates for `SetDefaults`, `OnHitNPC`, and more
+- **Real-Time Linting** — Syntax errors flagged as you type
+- **Mobile-Ready** — Keyboard shortcuts and W/S navigation optimized for touchscreens
+
+### Texture Manager
+Organize sprites visually without touching file paths.
+- **Path-Aware** — Automatically generates the correct folder structure from texture paths
+- **Visual Grid** — Zoom support and transparency grid for accurate previewing
+- **Entity Linking** — View texture dimensions, file size, and which entities reference each asset
+
+### Quick Create System (Templates)
+Generate fully structured entities in seconds.
+- **Entity Types** — Items, NPCs, Projectiles, Buffs, Biomes, and more
+- **Ready-Made Templates** — Swords, Guns, Bosses, Minions, Town NPCs, and beyond
+- **Quick Blank Mode** — Instantly scaffold empty files when you just need a starting point
+
+### Build System
+One-click compilation to a ready-to-deploy mod package.
+1. Collects all entities, hooks, and textures
+2. Auto-generates registration files (`RegisterItems.js`, etc.)
+3. Injects the TL framework core library
+4. Packages everything into a `.zip` ready to drop into TL Pro's `Mods` folder
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| **Core** | React 19, TypeScript, Vite 6 |
+| **Styling** | Tailwind CSS, Lucide React |
+| **State** | Zustand (with IndexedDB persistence) |
+| **Editor** | CodeMirror 6 |
+| **Build Output** | JSZip |
+| **Notifications** | Sonner |
+| **Utilities** | UUID |
+
+---
+
+## Project Structure
+
+```
 src/
 ├── components/
-│   ├── editor/           # Core do editor (Abas, CodeMirror, Sidebar)
-│   ├── modals/           # Modais globais (Criação, Configurações)
-│   └── workspace/        # Dashboard
-├── store/                # Zustand stores (Gerenciamento de Estado)
-├── services/             # Lógica de Build e Linguagem
-├── constants/            # Templates e Configurações
-└── types/                # Definições TypeScript
+│   ├── editor/           # Editor core (tabs, CodeMirror, sidebar)
+│   ├── modals/           # Global modals (entity creation, settings)
+│   └── workspace/        # Dashboard and project management
+├── store/                # Zustand state stores
+├── services/             # Build system and language services
+├── constants/            # Templates and configuration constants
+└── types/                # TypeScript type definitions
 ```
 
-### Tecnologias Utilizadas
-1. Core: React 19, TypeScript, Vite.
-2. Estilização: Tailwind CSS, Lucide React (ícones).
-3. Estado: Zustand (com persistência no IndexedDB).
-4. Editor: CodeMirror 6.
-5. JSZip: geração de arquivos no navegador.
-6. UUID, Sonner: notificações.
+---
 
-###🚀 Instalação e Execução Local (a aplicação também é acessível pelo site oficial!)
-Para rodar o LemonEngine offline ou contribuir com o desenvolvimento:
+## Getting Started
 
-### Pré-requisitos
-- Node.js (v18+)
-- `npm ou yarn`
+### Prerequisites
 
-### Passos
+- Node.js **v18** or higher
+- `npm` or `yarn`
 
-***Clone o repositório:***
-1. `git clone https://github.com/JonataOliveiraa/-LemonEngine`
-2. `cd lemon-engine`
-3. E então instale as dependências: `npm install`
+### Installation
 
-### Execute o servidor de desenvolvimento:
+```bash
+# 1. Clone the repository
+git clone https://github.com/JonataOliveiraa/-LemonEngine
+cd lemon-engine
 
-`npm run dev`
+# 2. Install dependencies
+npm install
 
-***Acesse em http://localhost:5173.***
+# 3. Start the development server
+npm run dev
+```
 
-Build para produção:
-`npm run build`
+Open [http://localhost:5173](http://localhost:5173) in your browser.
 
--------------------------------
+### Production Build
 
-### Contribuição
-- Contribuições são bem-vindas!
-- Reporte bugs: Abra uma issue descrevendo o problema
-- Pull Requests: Garanta que o código siga o estilo do projeto (ESLint + Prettier).
+```bash
+npm run build
+```
 
-### Licença e Créditos
-- Desenvolvido usando o ExMod criado pelo Lemon Studio.
-- Distribuído sob a licença MIT. Veja o arquivo LICENSE para mais detalhes.
+> The app is also accessible online at the official site — no installation required.
 
-***Discord:*** https://discord.gg/J2xFF4cDk9
+---
+
+## Contributing
+
+Contributions are welcome and appreciated.
+
+- **Bug reports** — Open an issue with a clear description and reproduction steps
+- **Feature requests** — Start a discussion before opening a PR
+- **Pull requests** — Ensure your code follows the project's ESLint + Prettier configuration
+
+---
+
+## License
+
+LemonEngine is distributed under the **LemonEngine Non-Commercial License (NCL)**.  
+Free to use, copy, and modify — **commercial sale of this software or derivatives is not permitted.**
+
+See the [LICENSE](./LICENSE) file for full terms.
+
+---
+
+## Credits
+
+Built on top of **ExMod**, created by **Lemon Studio**.
+
+**Discord:** [discord.gg/J2xFF4cDk9](https://discord.gg/J2xFF4cDk9)

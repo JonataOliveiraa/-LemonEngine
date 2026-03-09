@@ -2,9 +2,11 @@ import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { useEditorStore } from '../../store';
 import { 
     Globe, Plus, Trash2, Upload, ChevronLeft, Search, FileJson, Languages, 
-    AlertCircle, Braces 
+    AlertCircle, Braces, X
 } from 'lucide-react';
 import { toast } from 'sonner';
+
+// ==================== CONSTANTES E UTILITÁRIOS ====================
 
 const SUPPORTED_LANGUAGES = [
     { id: 'de-DE', display: 'Deutsch (de-DE)' },
@@ -37,7 +39,23 @@ const flattenObject = (ob: any): Record<string, string> => {
     return toReturn;
 };
 
-// Componente isolado da linha para manter o estado local durante a digitação e não perder foco
+// ==================== HOOK PERSONALIZADO PARA DETECTAR MOBILE ====================
+
+const useIsMobile = () => {
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
+    return isMobile;
+};
+
+// ==================== COMPONENTE DE LINHA DE TRADUÇÃO (inalterado) ====================
+
 interface TranslationRowProps {
     locKey: string;
     locValue: string;
@@ -55,7 +73,6 @@ const TranslationRow: React.FC<TranslationRowProps> = React.memo(({ locKey, locV
     }, [locKey]);
 
     useEffect(() => {
-        // Se a chave for recém criada, foca nela e seleciona o texto automaticamente
         if (isNewlyCreated) {
             const el = document.getElementById(`key-${locKey}`);
             if (el) {
@@ -70,7 +87,7 @@ const TranslationRow: React.FC<TranslationRowProps> = React.memo(({ locKey, locV
         if (finalKey && finalKey !== locKey) {
             onUpdateKey(locKey, finalKey, locValue);
         } else {
-            setLocalKey(locKey); // Reverte caso o usuário deixe em branco
+            setLocalKey(locKey);
         }
     };
 
@@ -78,8 +95,6 @@ const TranslationRow: React.FC<TranslationRowProps> = React.memo(({ locKey, locV
         if (e.key === 'Enter') {
             e.preventDefault();
             commitKeyUpdate();
-            
-            // Pula o foco pro campo de valor (Translation) ao apertar Enter
             const targetKey = localKey.trim() || locKey;
             setTimeout(() => {
                 document.getElementById(`val-${targetKey}`)?.focus();
@@ -119,10 +134,132 @@ const TranslationRow: React.FC<TranslationRowProps> = React.memo(({ locKey, locV
     );
 });
 
+// ==================== NOVOS COMPONENTES PARA MOBILE ====================
+
+interface MobileCategoryBarProps {
+    categories: string[];
+    selectedCategory: string | null;
+    onSelectCategory: (cat: string) => void;
+    onDeleteCategory: (cat: string) => void;
+    onAddCategory: (name: string) => void;
+    newCategoryName: string;
+    setNewCategoryName: (name: string) => void;
+    showSuggestions: boolean;
+    setShowSuggestions: (show: boolean) => void;
+    filteredSuggestions: string[];
+}
+
+const MobileCategoryBar: React.FC<MobileCategoryBarProps> = ({
+    categories,
+    selectedCategory,
+    onSelectCategory,
+    onDeleteCategory,
+    onAddCategory,
+    newCategoryName,
+    setNewCategoryName,
+    showSuggestions,
+    setShowSuggestions,
+    filteredSuggestions
+}) => {
+    const [isAdding, setIsAdding] = useState(false);
+
+    const handleAddClick = () => {
+        if (isAdding && newCategoryName.trim()) {
+            onAddCategory(newCategoryName.trim());
+            setNewCategoryName('');
+            setIsAdding(false);
+        } else {
+            setIsAdding(true);
+        }
+    };
+
+    return (
+        <div className="p-3 bg-white dark:bg-[#1e1e1e] border-b border-slate-200 dark:border-[#333]">
+            <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs font-bold uppercase text-slate-500">Categories</span>
+                <button
+                    onClick={handleAddClick}
+                    className="ml-auto p-1.5 bg-[#007acc] text-white rounded-md text-xs font-bold uppercase flex items-center gap-1"
+                >
+                    {isAdding ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+                    <span>{isAdding ? 'Confirm' : 'Add'}</span>
+                </button>
+            </div>
+
+            {isAdding && (
+                <div className="mb-3 relative">
+                    <input
+                        type="text"
+                        value={newCategoryName}
+                        onChange={(e) => {
+                            setNewCategoryName(e.target.value);
+                            setShowSuggestions(true);
+                        }}
+                        onFocus={() => setShowSuggestions(true)}
+                        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                        placeholder="Nome da nova categoria"
+                        className="w-full bg-slate-50 dark:bg-[#252526] border border-slate-200 dark:border-[#444] rounded-lg px-3 py-2 text-sm outline-none focus:border-[#007acc]"
+                        autoFocus
+                    />
+                    {showSuggestions && filteredSuggestions.length > 0 && (
+                        <div className="absolute top-full left-0 w-full mt-1 bg-white dark:bg-[#252526] border border-slate-200 dark:border-[#444] rounded-lg shadow-xl max-h-40 overflow-y-auto z-50 py-1">
+                            {filteredSuggestions.map(c => (
+                                <button
+                                    key={c}
+                                    onMouseDown={() => {
+                                        setNewCategoryName(c);
+                                        setShowSuggestions(false);
+                                    }}
+                                    className="w-full text-left px-3 py-2 text-xs hover:bg-slate-100 dark:hover:bg-[#333]"
+                                >
+                                    {c}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                {categories.length === 0 ? (
+                    <p className="text-xs text-slate-400">Nenhuma categoria</p>
+                ) : (
+                    categories.map(cat => (
+                        <div key={cat} className="flex items-center shrink-0">
+                            <button
+                                onClick={() => onSelectCategory(cat)}
+                                className={`px-3 py-1.5 text-xs font-bold rounded-l-md transition-colors ${
+                                    selectedCategory === cat
+                                        ? 'bg-[#007acc] text-white'
+                                        : 'bg-slate-100 dark:bg-[#252526] text-slate-700 dark:text-slate-300'
+                                }`}
+                            >
+                                {cat}
+                            </button>
+                            {selectedCategory === cat && (
+                                <button
+                                    onClick={() => onDeleteCategory(cat)}
+                                    className="p-1.5 bg-[#007acc] text-white rounded-r-md hover:bg-rose-500 transition-colors"
+                                    title="Excluir categoria"
+                                >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                            )}
+                        </div>
+                    ))
+                )}
+            </div>
+        </div>
+    );
+};
+
+// ==================== COMPONENTE PRINCIPAL ====================
+
 const LocalizationEditor: React.FC = () => {
     const { workspaces, activeWorkspaceId, updateWorkspace } = useEditorStore();
     const workspace = workspaces.find(w => w.id === activeWorkspaceId);
-    
+    const isMobile = useIsMobile();
+
     const [selectedLang, setSelectedLang] = useState<string | null>(null);
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     
@@ -132,8 +269,6 @@ const LocalizationEditor: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [confirmDeleteLang, setConfirmDeleteLang] = useState<string | null>(null);
-    
-    // Estado para auto-focus
     const [newlyCreatedKey, setNewlyCreatedKey] = useState<string | null>(null);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -142,7 +277,6 @@ const LocalizationEditor: React.FC = () => {
 
     const rawLocData = workspace.localization || { 'en-US': {} };
 
-    // Garante que dados da UI estejam sempre achatados
     const locData = useMemo(() => {
         const normalized: Record<string, Record<string, Record<string, string>>> = {};
         for (const lang in rawLocData) {
@@ -196,7 +330,6 @@ const LocalizationEditor: React.FC = () => {
         const updated = JSON.parse(JSON.stringify(rawLocData));
         if (!updated[selectedLang]) updated[selectedLang] = {};
         updated[selectedLang][cat] = {};
-        
         saveLocData(updated);
         setNewCategoryName('');
         setSelectedCategory(cat);
@@ -205,49 +338,37 @@ const LocalizationEditor: React.FC = () => {
 
     const handleAddKey = () => {
         if (!selectedLang || !selectedCategory) return;
-        
         const newKey = `NewKey_${Date.now()}`;
-        
         const updated = JSON.parse(JSON.stringify(rawLocData));
         if (!updated[selectedLang]) updated[selectedLang] = {};
         if (!updated[selectedLang][selectedCategory]) updated[selectedLang][selectedCategory] = {};
-        
         updated[selectedLang][selectedCategory][newKey] = "";
-        
         saveLocData(updated);
         setNewlyCreatedKey(newKey);
-        setSearchTerm(''); // Limpa a pesquisa para garantir que a chave apareça!
+        setSearchTerm('');
     };
 
     const handleUpdateTranslationKey = (oldKey: string, newKey: string, value: string) => {
         if (!selectedLang || !selectedCategory) return;
         if (oldKey === newKey) return;
-        
         const updated = JSON.parse(JSON.stringify(rawLocData)); 
         if (!updated[selectedLang]) updated[selectedLang] = {};
         if (!updated[selectedLang][selectedCategory]) updated[selectedLang][selectedCategory] = {};
-        
-        // Verifica se já existe para evitar sobrescrever
         if (updated[selectedLang][selectedCategory][newKey] !== undefined) {
             toast.error(`Key "${newKey}" already exists!`);
             return;
         }
-
         delete updated[selectedLang][selectedCategory][oldKey];
         updated[selectedLang][selectedCategory][newKey] = value;
         saveLocData(updated);
-        
-        // Mantém o auto-focus ativo se acabou de alterar o nome da chave nova
         if (newlyCreatedKey === oldKey) setNewlyCreatedKey(newKey);
     };
 
     const handleUpdateTranslationValue = (key: string, newValue: string) => {
         if (!selectedLang || !selectedCategory) return;
         const updated = JSON.parse(JSON.stringify(rawLocData)); 
-        
         if (!updated[selectedLang]) updated[selectedLang] = {};
         if (!updated[selectedLang][selectedCategory]) updated[selectedLang][selectedCategory] = {};
-        
         updated[selectedLang][selectedCategory][key] = newValue;
         saveLocData(updated);
     };
@@ -274,13 +395,11 @@ const LocalizationEditor: React.FC = () => {
     const handleImportJson = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file || !selectedLang) return;
-
         const reader = new FileReader();
         reader.onload = (ev) => {
             try {
                 const parsed = JSON.parse(ev.target?.result as string);
                 const updated = JSON.parse(JSON.stringify(rawLocData));
-                
                 Object.keys(parsed).forEach(category => {
                     if (!updated[selectedLang][category]) {
                         updated[selectedLang][category] = {};
@@ -291,7 +410,6 @@ const LocalizationEditor: React.FC = () => {
                         ...flatCategoryData
                     };
                 });
-                
                 saveLocData(updated);
                 toast.success("JSON imported and merged successfully!");
             } catch (err) {
@@ -307,14 +425,11 @@ const LocalizationEditor: React.FC = () => {
         return lang ? lang.display : id;
     };
 
-    // -------------------------------------------------------------
-    // RENDER: TELA DE ESCOLHA DE IDIOMA
-    // -------------------------------------------------------------
+    // ==================== TELA DE SELEÇÃO DE IDIOMA (responsiva, mas já razoável) ====================
     if (!selectedLang) {
         return (
             <div className="h-full bg-slate-50 dark:bg-[#121212] overflow-y-auto p-4 md:p-8">
                 <div className="max-w-4xl mx-auto space-y-6">
-                    
                     <div>
                         <h2 className="text-2xl font-righteous text-slate-800 dark:text-white uppercase tracking-wide">Localization</h2>
                         <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Manage game translations</p>
@@ -368,27 +483,100 @@ const LocalizationEditor: React.FC = () => {
         );
     }
 
-    // -------------------------------------------------------------
-    // RENDER: EDITOR DE IDIOMA SELECIONADO
-    // -------------------------------------------------------------
+    // ==================== DADOS PARA O EDITOR ====================
     const categories = Object.keys(locData[selectedLang] || {}).sort();
     const currentTranslations = selectedCategory ? locData[selectedLang][selectedCategory] : {};
-    
-    // Filtro seguro
     const filteredKeys = Object.keys(currentTranslations || {}).filter(k => {
         if (!searchTerm) return true;
         const s = searchTerm.toLowerCase();
-        const keyMatch = k.toLowerCase().includes(s);
-        const val = currentTranslations[k];
-        const valMatch = typeof val === 'string' && val.toLowerCase().includes(s);
-        return keyMatch || valMatch;
+        return k.toLowerCase().includes(s) || (currentTranslations[k]?.toLowerCase().includes(s) ?? false);
     });
 
-    const filteredSuggestions = STANDARD_CATEGORIES.filter(c => c.toLowerCase().includes(newCategoryName.toLowerCase()) && c !== newCategoryName);
+    const filteredSuggestions = STANDARD_CATEGORIES.filter(c => 
+        c.toLowerCase().includes(newCategoryName.toLowerCase()) && c !== newCategoryName
+    );
 
+    // ==================== RENDER CONDICIONAL: MOBILE VS DESKTOP ====================
+    if (isMobile) {
+        // ---------- LAYOUT MOBILE ----------
+        return (
+            <div className="h-full flex flex-col bg-slate-50 dark:bg-[#121212] overflow-hidden">
+                {/* Barra superior com idioma e ações */}
+                <div className="p-3 bg-white dark:bg-[#1e1e1e] border-b border-slate-200 dark:border-[#333] flex items-center justify-between">
+                    <button onClick={() => { setSelectedLang(null); setSelectedCategory(null); }} className="flex items-center gap-1 px-2 py-1 text-slate-600 dark:text-slate-300">
+                        <ChevronLeft className="w-5 h-5" />
+                        <span className="text-xs font-bold">Languages</span>
+                    </button>
+                    <span className="text-xs font-mono bg-[#007acc]/10 text-[#007acc] px-2 py-1 rounded">{selectedLang}</span>
+                    <label className="p-1.5 text-emerald-600 dark:text-emerald-500 cursor-pointer">
+                        <Upload className="w-5 h-5" />
+                        <input type="file" accept=".json" className="hidden" ref={fileInputRef} onChange={handleImportJson} />
+                    </label>
+                </div>
+
+                {/* Barra de categorias mobile (com novo componente) */}
+                <MobileCategoryBar
+                    categories={categories}
+                    selectedCategory={selectedCategory}
+                    onSelectCategory={setSelectedCategory}
+                    onDeleteCategory={handleDeleteCategory}
+                    onAddCategory={handleAddCategory}
+                    newCategoryName={newCategoryName}
+                    setNewCategoryName={setNewCategoryName}
+                    showSuggestions={showSuggestions}
+                    setShowSuggestions={setShowSuggestions}
+                    filteredSuggestions={filteredSuggestions}
+                />
+
+                {/* Área de edição das chaves */}
+                {selectedCategory ? (
+                    <div className="flex-1 flex flex-col overflow-hidden">
+                        <div className="p-3 bg-white dark:bg-[#1e1e1e] border-b border-slate-200 dark:border-[#333] flex items-center gap-2">
+                            <div className="relative flex-1">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Search key..."
+                                    className="w-full bg-slate-50 dark:bg-[#121212] border border-slate-200 dark:border-[#333] rounded-md pl-9 pr-3 py-2 text-sm outline-none focus:border-[#007acc]"
+                                    value={searchTerm}
+                                    onChange={e => setSearchTerm(e.target.value)}
+                                />
+                            </div>
+                            <button onClick={handleAddKey} className="p-2 bg-[#007acc] text-white rounded-md">
+                                <Plus className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-3 space-y-3 scrollbar-hide">
+                            {filteredKeys.length === 0 ? (
+                                <p className="text-center text-xs text-slate-400">Nenhuma tradução encontrada.</p>
+                            ) : (
+                                filteredKeys.map(key => (
+                                    <TranslationRow
+                                        key={key}
+                                        locKey={key}
+                                        locValue={currentTranslations[key]}
+                                        onUpdateKey={handleUpdateTranslationKey}
+                                        onUpdateValue={handleUpdateTranslationValue}
+                                        onDelete={handleDeleteTranslation}
+                                        isNewlyCreated={newlyCreatedKey === key}
+                                    />
+                                ))
+                            )}
+                        </div>
+                    </div>
+                ) : (
+                    <div className="flex-1 flex items-center justify-center text-slate-400 text-sm">
+                        Selecione uma categoria
+                    </div>
+                )}
+            </div>
+        );
+    }
+
+    // ---------- LAYOUT DESKTOP (original, com pequenos ajustes) ----------
     return (
         <div className="h-full flex flex-col md:flex-row bg-slate-50 dark:bg-[#121212] overflow-hidden">
-            
             {/* Esquerda: Categorias */}
             <div className="w-full md:w-72 bg-white dark:bg-[#1e1e1e] border-b md:border-b-0 md:border-r border-slate-200 dark:border-[#333] flex flex-col shrink-0">
                 <div className="p-3.5 border-b border-slate-200 dark:border-[#333] flex items-center justify-between bg-slate-50 dark:bg-[#1a1a1a]">
@@ -500,7 +688,6 @@ const LocalizationEditor: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* ADDED scrollbar-hide here to fix the ugly scrollbar issue */}
                         <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                             {filteredKeys.length === 0 ? (
                                 <p className="text-center text-[11px] text-slate-400 font-bold uppercase tracking-widest mt-10">No translations found.</p>
@@ -521,7 +708,6 @@ const LocalizationEditor: React.FC = () => {
                     </>
                 )}
             </div>
-
         </div>
     );
 };

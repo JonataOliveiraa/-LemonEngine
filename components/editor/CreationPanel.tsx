@@ -21,7 +21,7 @@ const CreationPanel: React.FC<Props> = ({ isMobile = false, onClose }) => {
   } = useEditorStore();
 
   // Usa creationModal para pegar os dados (Desktop e Mobile unificados)
-  const activeCategory = creationModal.activeCategory || EntityType.ITEM;
+  const activeCategory = creationModal.activeCategory ?? EntityType.ITEM;
   const activeFolder = creationModal.targetFolder || '';
   
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);

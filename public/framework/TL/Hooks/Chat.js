@@ -4,9 +4,7 @@ import { CombinedLoader } from './../Loaders/CombinedLoader.js';
 export class ChatHooks {
     static initialized = false;
     
-    static HookList = {
-        ProcessIncomingMessage: true
-    };
+    //{hookinput}
     
     static Initialize() {
         if (this.initialized) return;

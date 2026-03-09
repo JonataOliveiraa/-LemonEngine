@@ -5,10 +5,11 @@ import Sidebar from './Sidebar';
 import EntityEditor from './editors/ItemEditor';
 import ManifestEditor from './editors/ManifestEditor';
 import MainJsEditor from './editors/MainJsEditor';
+import TlEditor from './editors/TlEditor';
 import PropertiesPanel from './PropertiesPanel';
 import CreationModal from './CreationModal';
 import DeleteConfirmation from './DeleteConfirmation'; 
-import { ChevronRight, Terminal, X, FolderInput, Lightbulb, FileSearch, Save } from 'lucide-react';
+import { ChevronRight, Terminal, X, FolderInput, FolderCog } from 'lucide-react';
 import RenameModal from './RenameModal';
 import MoveModal from './MoveModal';
 import FileTabs from './FileTabs'; 
@@ -21,7 +22,6 @@ const Editor: React.FC = () => {
     creationModal, moveModal, openMoveModal
   } = useEditorStore();
 
-  // Ref que guardará a instância do editor ativo (seja EntityEditor ou MainJsEditor)
   const currentEditorRef = useRef<EditorHandle>(null);
 
   const safeWorkspaces = workspaces || []; 
@@ -30,12 +30,18 @@ const Editor: React.FC = () => {
   
   const [newFolderName, setNewFolderName] = useState('');
 
-  // Funções disparadas pelos botões do Header Unificado
-  const handleSave = () => currentEditorRef.current?.save();
-  const handleFocus = () => currentEditorRef.current?.focus && currentEditorRef.current.focus();
+  const isTlFile = activeEntityId?.startsWith('tl:');
 
   const renderMainContent = () => {
-    // 1. Editor de Settings.json (Não usa ref pois salva automaticamente ou tem botão próprio)
+    if (isTlFile && activeEntityId) {
+      const filePath = activeEntityId.replace('tl:', '');
+      return (
+        <div className="h-full">
+          <TlEditor path={filePath} />
+        </div>
+      );
+    }
+
     if (activeEntityId === 'settings' && workspace) {
       return (
         <div className="h-full overflow-y-auto custom-scrollbar p-4 md:p-8">
@@ -44,9 +50,7 @@ const Editor: React.FC = () => {
       );
     }
     
-    // 2. Editor do Main.js
     if (activeEntityId === 'main' && workspace) {
-      // IMPORTANTE: MainJsEditor precisa ter forwardRef implementado também para isso funcionar
       return (
         <div className="h-full">
           <MainJsEditor ref={currentEditorRef} workspace={workspace} />
@@ -54,17 +58,14 @@ const Editor: React.FC = () => {
       );
     }
 
-    // 3. Editor de Entidade (Item, NPC, etc)
     if (activeEntity) {
       return (
         <div className="h-full">
-            {/* Passamos a ref aqui */}
             <EntityEditor ref={currentEditorRef} entity={activeEntity} />
         </div>
       );
     }
 
-    // 4. Estado Vazio (Dashboard inicial)
     return (
         <div className="h-full flex flex-col items-center justify-center text-center p-6 md:p-12 animate-in fade-in duration-700">
             <div className="max-w-md space-y-8">
@@ -84,7 +85,6 @@ const Editor: React.FC = () => {
   return (
     <div className="flex-1 flex overflow-hidden relative h-full">
         
-        {/* SIDEBAR */}
         {!isFullscreen && !focusMode && (
           <>
             <div 
@@ -106,7 +106,6 @@ const Editor: React.FC = () => {
           </>
         )}
 
-        {/* Toggle Button Mobile */}
         {!isSidebarOpen && !focusMode && !isFullscreen && (
           <button 
             onClick={() => setSidebarOpen(true)}
@@ -116,53 +115,35 @@ const Editor: React.FC = () => {
           </button>
         )}
         
-        {/* Main Content Area */}
         <main className="flex-1 bg-white dark:bg-[#1e1e1e] flex flex-col overflow-hidden relative transition-all duration-300">
           
-          {/* --- HEADER UNIFICADO (TABS + TOOLBAR) --- */}
           <div className="h-10 bg-slate-100 dark:bg-[#252526] border-b border-slate-200 dark:border-[#333] flex items-center justify-between shrink-0">
               
-              {/* Esquerda: FileTabs (flex-1 para ocupar espaço) */}
-              <div className="flex-1 min-w-0 h-full overflow-hidden">
-                  <FileTabs />
+              {/* O contêiner abaixo agora força a ocultação da scrollbar */}
+              <div className="flex-1 min-w-0 h-full overflow-hidden scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                  <FileTabs />\
               </div>
 
-              {/* Direita: Actions (Só aparece se tiver entidade ativa ou main.js) */}
-              {(activeEntity || activeEntityId === 'main') && (
+              {(activeEntity || activeEntityId === 'main' || isTlFile) && (
                   <div className="flex items-center gap-1 px-2 dark:border-[#333] bg-slate-100 dark:bg-[#252526] h-full shrink-0 z-10 shadow-sm border-l border-slate-200 dark:border-[#333]">
                       
-                      {/* Caminho do Arquivo (Apenas para Entidades) */}
+                      {isTlFile && (
+                        <div className="flex items-center gap-1.5 mr-3 px-2 py-0.5 bg-rose-500/10 border border-rose-500/20 rounded text-[9px] font-black text-rose-500 uppercase tracking-tighter">
+                          <FolderCog className="w-3 h-3" /> Framework File
+                        </div>
+                      )}
+
                       {activeEntity && (
                         <div className="hidden md:block mr-2 text-[10px] text-slate-400 font-mono max-w-[150px] truncate">
                             /{activeEntity.folder || 'Root'}
                         </div>
                       )}
 
-                      {/* Botão Mover (Apenas para Entidades) */}
-                      {activeEntity && (
+                      {activeEntity && !isTlFile && (
                         <button onClick={() => openMoveModal(activeEntity.id, activeEntity.folder || '')} className="p-1.5 rounded-md text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-[#333] transition-colors" title="Move File">
                             <FolderInput className="w-4 h-4" />
                         </button>
                       )}
-                      
-                      {/* Botão Inspetor (Apenas para Entidades) */}
-                      {activeEntity && (
-                        <button onClick={() => setPropertiesOpen(!isPropertiesOpen)} className={`p-1.5 rounded-md transition-all ${isPropertiesOpen ? 'bg-[#007acc] text-white' : 'text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-[#333]'}`} title="Inspect">
-                            <FileSearch className="w-4 h-4" />
-                        </button>
-                      )}
-                      
-                      {/* Botão Focar Editor */}
-                      <button onClick={handleFocus} className="p-1.5 rounded-md text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-[#333] transition-colors" title="Focus Editor">
-                          <Lightbulb className="w-4 h-4" />
-                      </button>
-                      
-                      <div className="w-px h-4 bg-slate-300 dark:bg-[#444] mx-1"></div>
-
-                      {/* Botão Salvar (Comanda o filho via Ref) */}
-                      <button onClick={handleSave} className="flex items-center gap-1.5 px-3 py-1 bg-[#007acc] hover:bg-[#0062a3] text-white rounded-md text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 shadow-sm">
-                          <Save className="w-3 h-3" /> Save
-                      </button>
                   </div>
               )}
           </div>
@@ -172,14 +153,12 @@ const Editor: React.FC = () => {
           </div>
         </main>
 
-        {/* Properties Panel */}
-        {isPropertiesOpen && !isFullscreen && !focusMode && activeEntity && (
+        {isPropertiesOpen && !isFullscreen && !focusMode && activeEntity && !isTlFile && (
             <div className="w-80 h-full shrink-0 hidden lg:block">
                 <PropertiesPanel entity={activeEntity} />
             </div>
         )}
 
-      {/* Modais Globais */}
       {creationModal?.isOpen && <CreationModal />}
       <DeleteConfirmation />
       <RenameModal />

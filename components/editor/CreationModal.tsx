@@ -333,7 +333,7 @@ const CreationModal: React.FC = () => {
         }));
     }
 
-    const activeCategory = creationModal?.activeCategory || EntityType.ITEM;
+    const activeCategory = creationModal?.activeCategory ?? EntityType.ITEM;
     const selectedTemplateId = creationModal?.selectedTemplateId;
 
     if (!creationModal?.isOpen) return null;
